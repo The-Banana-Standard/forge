@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { mockInvoke, resetTauriMocks } from "../../__test-utils__/tauri-mock";
 import { useSkillStore } from "../useSkillStore";

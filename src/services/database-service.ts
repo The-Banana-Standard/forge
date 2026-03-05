@@ -1,12 +1,18 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { Project } from "../types/project";
 
-let db: Awaited<ReturnType<typeof Database.load>> | null = null;
+let dbPromise: Promise<Awaited<ReturnType<typeof Database.load>>> | null = null;
 
 async function getDb() {
-  if (!db) {
-    db = await Database.load("sqlite:forge.db");
-    await db.execute(`
+  if (!dbPromise) {
+    dbPromise = initDb();
+  }
+  return dbPromise;
+}
+
+async function initDb() {
+  const db = await Database.load("sqlite:forge.db");
+  await db.execute(`
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -44,7 +50,6 @@ async function getDb() {
     } catch (_) {
       // Non-critical — silently ignore cleanup failures
     }
-  }
   return db;
 }
 
@@ -81,11 +86,6 @@ export async function updateLastOpened(id: string): Promise<void> {
 export async function removeProject(id: string): Promise<void> {
   const d = await getDb();
   await d.execute("DELETE FROM projects WHERE id = $1", [id]);
-}
-
-export async function removeProjectsByWorkspace(workspacePath: string): Promise<void> {
-  const d = await getDb();
-  await d.execute("DELETE FROM projects WHERE workspace_path = $1", [workspacePath]);
 }
 
 // ── Workspaces ──

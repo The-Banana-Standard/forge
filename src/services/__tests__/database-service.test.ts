@@ -19,7 +19,6 @@ import {
   addProject,
   updateLastOpened,
   removeProject,
-  removeProjectsByWorkspace,
   getAllWorkspaces,
   addWorkspace,
   removeWorkspace,
@@ -91,17 +90,6 @@ describe("database-service", () => {
       expect(mockExecute).toHaveBeenCalledWith(
         expect.stringContaining("DELETE FROM projects WHERE id"),
         ["p1"]
-      );
-    });
-  });
-
-  describe("removeProjectsByWorkspace", () => {
-    it("deletes all projects with matching workspace_path", async () => {
-      await removeProjectsByWorkspace("/my/workspace");
-
-      expect(mockExecute).toHaveBeenCalledWith(
-        expect.stringContaining("DELETE FROM projects WHERE workspace_path"),
-        ["/my/workspace"]
       );
     });
   });

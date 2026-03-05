@@ -4,6 +4,7 @@ export interface ClaudeSession {
   firstPrompt: string | null;
   messageCount: number | null;
   modified: string | null;
+  created: string | null;
   gitBranch: string | null;
   projectPath: string | null;
 }

@@ -31,7 +31,7 @@ let uuidCounter = 0;
 
 beforeEach(() => {
   uuidCounter = 0;
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}`);
+  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`);
   resetTauriMocks();
   mockGetAllProjects.mockReset().mockResolvedValue([]);
   mockAddProject.mockReset().mockResolvedValue(undefined);
@@ -56,17 +56,15 @@ describe("useProjects", () => {
     const { result } = renderHook(() => useProjects());
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(result.current.projects).toEqual(projects);
     });
-
-    expect(result.current.projects).toEqual(projects);
   });
 
   it("starts with no selected project", async () => {
     const { result } = renderHook(() => useProjects());
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(result.current.projects).toBeDefined();
     });
 
     expect(result.current.selectedProject).toBeNull();
@@ -79,7 +77,7 @@ describe("useProjects", () => {
     const { result } = renderHook(() => useProjects());
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(result.current.projects.length).toBe(1);
     });
 
     await act(async () => {
@@ -90,29 +88,12 @@ describe("useProjects", () => {
     expect(mockUpdateLastOpened).toHaveBeenCalledWith("p1");
   });
 
-  it("deselectProject clears selectedProject", async () => {
-    const project = { id: "p1", name: "MyApp", path: "/proj", added_at: "", last_opened: null, workspace_path: null };
-    mockGetAllProjects.mockResolvedValue([project]);
-
-    const { result } = renderHook(() => useProjects());
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    await act(async () => {
-      await result.current.selectProject(project);
-    });
-    expect(result.current.selectedProject).not.toBeNull();
-
-    act(() => {
-      result.current.deselectProject();
-    });
-    expect(result.current.selectedProject).toBeNull();
-  });
-
   it("removeProject calls service and reloads", async () => {
     const { result } = renderHook(() => useProjects());
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => {
+      expect(result.current.projects).toBeDefined();
+    });
 
     await act(async () => {
       await result.current.removeProject("p1");
@@ -129,7 +110,9 @@ describe("useProjects", () => {
 
     const { result } = renderHook(() => useProjects());
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => {
+      expect(result.current.projects.length).toBe(1);
+    });
 
     await act(async () => {
       await result.current.selectProject(project);
@@ -145,7 +128,9 @@ describe("useProjects", () => {
   it("removeWorkspace calls service and reloads", async () => {
     const { result } = renderHook(() => useProjects());
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => {
+      expect(result.current.projects).toBeDefined();
+    });
 
     await act(async () => {
       await result.current.removeWorkspace("w1");
@@ -164,7 +149,7 @@ describe("useProjects", () => {
     const { result } = renderHook(() => useProjects());
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(result.current.projects).toBeDefined();
     });
 
     expect(mockInvoke).toHaveBeenCalledWith("scan_workspace", {

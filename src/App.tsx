@@ -18,7 +18,6 @@ function App() {
     addProject,
     addWorkspace,
     selectProject,
-    deselectProject,
     removeProject,
     removeWorkspace,
   } = useProjects();

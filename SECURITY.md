@@ -6,7 +6,7 @@ If you discover a security vulnerability in Forge, please report it responsibly.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, please email: **security@anthonymazzola.com**
+Instead, please use [GitHub Security Advisories](https://github.com/The-Banana-Standard/forge/security/advisories/new) to report vulnerabilities privately.
 
 You should receive a response within 48 hours. If the issue is confirmed, a fix will be released as soon as possible.
 

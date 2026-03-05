@@ -1,30 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Project } from "../../types/project";
+import type { ProjectInfo, ClaudeUsageStats } from "../../types/project-info";
+import { formatTokens } from "../../types/project-info";
 import { DailyPlanner } from "../DailyPlanner/DailyPlanner";
 import { GitHubDashboard } from "../GitHubDashboard/GitHubDashboard";
 import { SkillsStoreSection } from "./SkillsStoreSection";
-
-interface ProjectInfo {
-  name: string;
-  path: string;
-  description: string | null;
-  techStack: string[];
-  claudeMd: string | null;
-  tasksMd: string | null;
-  readmeExcerpt: string | null;
-  isGitRepo: boolean;
-  gitBranch: string | null;
-  lastCommit: string | null;
-}
-
-interface ClaudeUsageStats {
-  totalSessions: number;
-  totalMessages: number;
-  firstSessionDate: string | null;
-  dailyActivity: { date: string; messageCount: number; sessionCount: number; toolCallCount: number }[];
-  modelUsage: Record<string, { inputTokens: number; outputTokens: number; cacheReadInputTokens: number; cacheCreationInputTokens: number }>;
-}
 
 interface WorkspaceOverviewProps {
   projects: Project[];
@@ -33,13 +14,6 @@ interface WorkspaceOverviewProps {
   onSendTaskToClaude: (text: string, projectPath?: string) => void;
   onRunSkill: (skillName: string) => void;
   onBrowseAllSkills: () => void;
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toString();
 }
 
 export function WorkspaceOverview({
@@ -81,22 +55,28 @@ export function WorkspaceOverview({
     loadDashboard();
   }, [loadDashboard]);
 
-  // Refresh on window focus (user returning to app sees fresh data)
+  // Refresh on window focus with debounce (skip if refreshed within 30s)
+  const lastLoadRef = useRef(0);
   useEffect(() => {
-    const onFocus = () => loadDashboard();
+    const onFocus = () => {
+      if (Date.now() - lastLoadRef.current > 30_000) {
+        lastLoadRef.current = Date.now();
+        loadDashboard();
+      }
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [loadDashboard]);
 
   // Sort projects: those with recent commits first, then alphabetical
-  const sortedProjects = [...projects].sort((a, b) => {
+  const sortedProjects = useMemo(() => [...projects].sort((a, b) => {
     const aInfo = projectInfos.get(a.path);
     const bInfo = projectInfos.get(b.path);
     const aHasActivity = aInfo?.lastCommit ? 1 : 0;
     const bHasActivity = bInfo?.lastCommit ? 1 : 0;
     if (bHasActivity !== aHasActivity) return bHasActivity - aHasActivity;
     return a.name.localeCompare(b.name);
-  });
+  }), [projects, projectInfos]);
 
   const recentProjects = sortedProjects.slice(0, 6);
 

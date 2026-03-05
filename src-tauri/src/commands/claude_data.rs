@@ -63,33 +63,14 @@ fn get_claude_projects_dir() -> Option<PathBuf> {
     dirs::home_dir().map(|h| h.join(".claude").join("projects"))
 }
 
-/// Given a project at ~/workspace/foo, compute possible old Claude data paths
-/// e.g. the project used to be at ~/Desktop/foo
+/// Compute possible sanitized paths for Claude session data lookup.
+/// Claude Code stores session data under ~/.claude/projects/{sanitized-path}/
 fn get_candidate_sanitized_paths(project_path: &str) -> Vec<String> {
-    let mut candidates = vec![sanitize_path(project_path)];
-
-    // If the path is under ~/workspace/, also check ~/Desktop/ (common migration)
-    if project_path.contains("/workspace/") {
-        let desktop_path = project_path.replace("/workspace/", "/Desktop/");
-        candidates.push(sanitize_path(&desktop_path));
-    }
-
-    // Also try just the project name under common parent dirs
-    if let Some(name) = project_path.rsplit('/').next() {
-        if let Some(home) = dirs::home_dir() {
-            let desktop_variant = home.join("Desktop").join(name);
-            let s = sanitize_path(&desktop_variant.to_string_lossy());
-            if !candidates.contains(&s) {
-                candidates.push(s);
-            }
-        }
-    }
-
-    candidates
+    vec![sanitize_path(project_path)]
 }
 
 /// Parse a .jsonl session file to extract session metadata
-fn parse_jsonl_session(path: &PathBuf) -> Option<SessionEntry> {
+fn parse_jsonl_session(path: &std::path::Path) -> Option<SessionEntry> {
     let file = fs::File::open(path).ok()?;
     let reader = BufReader::new(file);
 
@@ -329,7 +310,7 @@ struct StatsCache {
 }
 
 /// Lightweight scan of a JSONL file to count messages and extract date
-fn scan_jsonl_stats(path: &PathBuf) -> Option<(String, u32, u32)> {
+fn scan_jsonl_stats(path: &std::path::Path) -> Option<(String, u32, u32)> {
     let file = fs::File::open(path).ok()?;
     let reader = BufReader::new(file);
 
@@ -346,7 +327,6 @@ fn scan_jsonl_stats(path: &PathBuf) -> Option<(String, u32, u32)> {
             continue;
         }
 
-        // Quick JSON field extraction without full parse for speed
         if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&line) {
             let msg_type = parsed.get("type").and_then(|v| v.as_str()).unwrap_or("");
 
@@ -466,17 +446,21 @@ fn scan_recent_activity(cutoff_date: &str) -> (Vec<DailyActivity>, u32, u32) {
 }
 
 fn parse_date_to_epoch(date: &str) -> u64 {
-    // Simple YYYY-MM-DD to approximate epoch seconds
+    // Approximate YYYY-MM-DD to epoch seconds (used only for file age filtering)
     let parts: Vec<&str> = date.split('-').collect();
     if parts.len() != 3 {
         return 0;
     }
-    let year: u64 = parts[0].parse().unwrap_or(2026);
-    let month: u64 = parts[1].parse().unwrap_or(1);
-    let day: u64 = parts[2].parse().unwrap_or(1);
+    let year: u64 = match parts[0].parse() {
+        Ok(y) if y >= 1970 => y,
+        _ => return 0,
+    };
+    let month: u64 = parts[1].parse().unwrap_or(1).clamp(1, 12);
+    let day: u64 = parts[2].parse().unwrap_or(1).clamp(1, 31);
 
-    // Rough calculation — doesn't need to be exact, just approximate
-    let days = (year - 1970) * 365 + (year - 1970) / 4 + (month - 1) * 30 + day;
+    const DAYS_BEFORE_MONTH: [u64; 12] = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    let leap_days = (year - 1969) / 4 - (year - 1901) / 100 + (year - 1601) / 400;
+    let days = (year - 1970) * 365 + leap_days + DAYS_BEFORE_MONTH[(month - 1) as usize] + day - 1;
     days * 86400
 }
 
@@ -575,12 +559,8 @@ mod tests {
 
     #[test]
     fn parse_date_to_epoch_malformed_input() {
-        // "not-a-date" has 3 hyphen-separated parts, so it passes the length check
-        // but parse() fails, falling back to defaults (year=2026, month=1, day=1).
-        // A truly malformed input with != 3 parts should return 0.
         assert_eq!(parse_date_to_epoch("garbage"), 0);
-        // "not-a-date" uses defaults — just verify it returns *something* nonzero
-        assert!(parse_date_to_epoch("not-a-date") > 0);
+        assert_eq!(parse_date_to_epoch("not-a-date"), 0);
     }
 
     #[test]
@@ -708,32 +688,8 @@ mod tests {
     // --- get_candidate_sanitized_paths ---
 
     #[test]
-    fn candidate_paths_always_includes_primary() {
+    fn candidate_paths_returns_sanitized_path() {
         let candidates = get_candidate_sanitized_paths("/Users/me/project");
-        assert!(!candidates.is_empty());
-        assert_eq!(candidates[0], sanitize_path("/Users/me/project"));
-    }
-
-    #[test]
-    fn candidate_paths_workspace_adds_desktop_variant() {
-        let candidates = get_candidate_sanitized_paths("/Users/me/workspace/myapp");
-        // Should have the primary sanitized path
-        assert!(candidates.contains(&sanitize_path("/Users/me/workspace/myapp")));
-        // Should also have Desktop variant
-        assert!(candidates.contains(&sanitize_path("/Users/me/Desktop/myapp")));
-    }
-
-    #[test]
-    fn candidate_paths_non_workspace_has_home_desktop_variant() {
-        let candidates = get_candidate_sanitized_paths("/Users/me/projects/myapp");
-        // Primary is always present
-        assert!(candidates.contains(&sanitize_path("/Users/me/projects/myapp")));
-        // No /workspace/ → /Desktop/ substitution variant
-        assert!(!candidates.contains(&sanitize_path("/Users/me/Desktop/myapp")));
-        // But the home_dir-based Desktop variant IS added (using the real home dir)
-        if let Some(home) = dirs::home_dir() {
-            let home_desktop = home.join("Desktop").join("myapp");
-            assert!(candidates.contains(&sanitize_path(&home_desktop.to_string_lossy())));
-        }
+        assert_eq!(candidates, vec![sanitize_path("/Users/me/project")]);
     }
 }

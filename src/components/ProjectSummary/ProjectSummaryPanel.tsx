@@ -2,20 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import ReactMarkdown from "react-markdown";
 import type { ClaudeSession } from "../../types/claude-session";
+import type { ProjectInfo } from "../../types/project-info";
 import { SessionCard } from "./SessionCard";
-
-interface ProjectInfo {
-  name: string;
-  path: string;
-  description: string | null;
-  techStack: string[];
-  claudeMd: string | null;
-  tasksMd: string | null;
-  readmeExcerpt: string | null;
-  isGitRepo: boolean;
-  gitBranch: string | null;
-  lastCommit: string | null;
-}
 
 interface ProjectSummaryPanelProps {
   projectName: string;

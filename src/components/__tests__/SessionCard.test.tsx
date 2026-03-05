@@ -22,6 +22,7 @@ function makeSession(overrides: Partial<ClaudeSession> = {}): ClaudeSession {
     firstPrompt: "Fix the login bug",
     messageCount: 12,
     modified: new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2h ago
+    created: null,
     gitBranch: "fix/login",
     projectPath: "/home/user/project",
     ...overrides,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { GitHubData } from "../types/github";
 
@@ -9,8 +9,15 @@ export function useGitHub(projectPaths: string[]) {
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Stabilize projectPaths by value instead of using join(",") hack
-  const stablePaths = useMemo(() => projectPaths, [JSON.stringify(projectPaths)]);
+  // Stabilize projectPaths by value
+  const stablePathsRef = useRef(projectPaths);
+  const serialized = JSON.stringify(projectPaths);
+  const prevSerialized = useRef(serialized);
+  if (prevSerialized.current !== serialized) {
+    prevSerialized.current = serialized;
+    stablePathsRef.current = projectPaths;
+  }
+  const stablePaths = stablePathsRef.current;
 
   const refresh = useCallback(async () => {
     if (stablePaths.length === 0) {

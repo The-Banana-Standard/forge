@@ -1,4 +1,4 @@
-use portable_pty::MasterPty;
+use portable_pty::{Child, MasterPty};
 use std::collections::HashMap;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
@@ -6,9 +6,8 @@ use std::sync::{Arc, Mutex};
 pub struct TerminalInstance {
     pub master: Box<dyn MasterPty + Send>,
     pub writer: Box<dyn Write + Send>,
-    #[allow(dead_code)]
+    pub child: Box<dyn Child + Send>,
     pub project_path: String,
-    #[allow(dead_code)]
     pub is_claude_session: bool,
 }
 

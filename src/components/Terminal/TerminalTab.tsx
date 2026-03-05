@@ -13,7 +13,7 @@ interface TerminalTabProps {
 
 export function TerminalTab({
   label,
-  projectName,
+  projectName: _,
   isActive,
   isClaudeSession,
   isWorkspaceAgent,

@@ -109,21 +109,23 @@ export function useTerminal() {
   }, []);
 
   const removeTab = useCallback(
-    async (tabId: string) => {
+    (tabId: string) => {
       if (tabId === HOME_TAB_ID) return;
 
+      // Extract terminal ID and close it outside of the state updater
       setTabs((prev) => {
         const tab = prev.find((t) => t.id === tabId);
         if (tab?.terminalId) {
+          // Fire-and-forget — side effect happens after we read the value
           closeTerminal(tab.terminalId).catch(() => {});
         }
-        const filtered = prev.filter((t) => t.id !== tabId);
-        // If we're removing the active tab, switch to home
-        setActiveTabId((currentActive) => {
-          if (currentActive === tabId) return HOME_TAB_ID;
-          return currentActive;
-        });
-        return filtered;
+        return prev;
+      });
+
+      setTabs((prev) => prev.filter((t) => t.id !== tabId));
+      setActiveTabId((currentActive) => {
+        if (currentActive === tabId) return HOME_TAB_ID;
+        return currentActive;
       });
     },
     []

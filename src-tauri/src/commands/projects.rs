@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use super::claude_data;
 
@@ -198,7 +198,7 @@ fn deps_has(deps: &std::collections::HashSet<String>, name: &str) -> bool {
     deps.contains(name)
 }
 
-fn has_extension_in_dir(path: &PathBuf, ext: &str) -> bool {
+fn has_extension_in_dir(path: &Path, ext: &str) -> bool {
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries.flatten() {
             if let Some(e) = entry.path().extension() {
@@ -211,7 +211,7 @@ fn has_extension_in_dir(path: &PathBuf, ext: &str) -> bool {
     false
 }
 
-fn read_file_truncated(path: &PathBuf, max_bytes: usize) -> Option<String> {
+fn read_file_truncated(path: &Path, max_bytes: usize) -> Option<String> {
     if !path.exists() {
         return None;
     }
@@ -231,13 +231,13 @@ fn read_file_truncated(path: &PathBuf, max_bytes: usize) -> Option<String> {
     }
 }
 
-fn read_readme_excerpt(path: &PathBuf) -> Option<String> {
+fn read_readme_excerpt(path: &Path) -> Option<String> {
     for name in &["README.md", "readme.md", "README.MD", "README"] {
         let readme = path.join(name);
         if readme.exists() {
             if let Ok(content) = fs::read_to_string(&readme) {
                 // Extract first meaningful paragraph after the title
-                let mut lines = content.lines().peekable();
+                let mut lines = content.lines();
                 let mut found_title = false;
                 let mut excerpt = String::new();
 

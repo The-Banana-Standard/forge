@@ -142,17 +142,26 @@ pub fn get_skills(project_path: Option<String>) -> Result<Vec<Skill>, String> {
 
 #[tauri::command]
 pub fn install_skill(id: String, source_url: String, format: String) -> InstallResult {
-    // Validate URL against allowed origins
+    // Validate skill id — prevent path traversal
+    if id.is_empty() || id.contains('/') || id.contains('\\') || id.contains("..") {
+        return InstallResult {
+            success: false,
+            id,
+            installed_path: None,
+            error: Some("Invalid skill id".to_string()),
+        };
+    }
+
+    // Validate URL against allowed origins (raw content only, no redirects)
     const ALLOWED_PREFIXES: &[&str] = &[
         "https://raw.githubusercontent.com/",
-        "https://github.com/",
     ];
     if !ALLOWED_PREFIXES.iter().any(|prefix| source_url.starts_with(prefix)) {
         return InstallResult {
             success: false,
             id,
             installed_path: None,
-            error: Some("Source URL must be from github.com".to_string()),
+            error: Some("Source URL must be from raw.githubusercontent.com".to_string()),
         };
     }
 
@@ -188,9 +197,9 @@ pub fn install_skill(id: String, source_url: String, format: String) -> InstallR
         };
     }
 
-    // Download via curl
+    // Download via curl (no redirects — raw.githubusercontent.com serves directly)
     let output = Command::new("curl")
-        .args(["-sL", "--fail", &source_url])
+        .args(["-s", "--fail", "--max-redirs", "0", &source_url])
         .output();
 
     match output {
@@ -231,6 +240,16 @@ pub fn install_skill(id: String, source_url: String, format: String) -> InstallR
 
 #[tauri::command]
 pub fn uninstall_skill(id: String, format: String) -> InstallResult {
+    // Validate skill id — prevent path traversal
+    if id.is_empty() || id.contains('/') || id.contains('\\') || id.contains("..") {
+        return InstallResult {
+            success: false,
+            id,
+            installed_path: None,
+            error: Some("Invalid skill id".to_string()),
+        };
+    }
+
     let home = match dirs::home_dir() {
         Some(h) => h,
         None => {

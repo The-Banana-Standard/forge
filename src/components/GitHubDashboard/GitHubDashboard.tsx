@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { Project } from "../../types/project";
 import { useGitHub } from "../../hooks/useGitHub";
 
@@ -7,7 +8,7 @@ interface GitHubDashboardProps {
 }
 
 export function GitHubDashboard({ projects, onSendToClaude }: GitHubDashboardProps) {
-  const projectPaths = projects.map((p) => p.path);
+  const projectPaths = useMemo(() => projects.map((p) => p.path), [projects]);
   const { data, loading, refresh } = useGitHub(projectPaths);
 
   // If gh not installed, show hint

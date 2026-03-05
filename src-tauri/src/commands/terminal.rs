@@ -14,7 +14,12 @@ pub struct ClaudeCliStatus {
 
 #[tauri::command]
 pub fn check_claude_cli() -> ClaudeCliStatus {
-    match std::process::Command::new("which").arg("claude").output() {
+    let (cmd, arg) = if cfg!(target_os = "windows") {
+        ("where", "claude")
+    } else {
+        ("which", "claude")
+    };
+    match std::process::Command::new(cmd).arg(arg).output() {
         Ok(output) if output.status.success() => {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
             ClaudeCliStatus {
@@ -72,7 +77,11 @@ pub fn spawn_terminal(
         }
         c
     } else {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let shell = if cfg!(target_os = "windows") {
+            std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string())
+        } else {
+            std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string())
+        };
         CommandBuilder::new(shell)
     };
 
@@ -88,7 +97,7 @@ pub fn spawn_terminal(
     }
     cmd.env("TERM", "xterm-256color");
 
-    let _child = pair
+    let child = pair
         .slave
         .spawn_command(cmd)
         .map_err(|e| format!("Failed to spawn: {}", e))?;
@@ -114,6 +123,7 @@ pub fn spawn_terminal(
             crate::state::TerminalInstance {
                 master: pair.master,
                 writer,
+                child,
                 project_path: project_path.clone(),
                 is_claude_session,
             },
@@ -127,25 +137,29 @@ pub fn spawn_terminal(
         let mut buf = [0u8; 4096];
         loop {
             match reader.read(&mut buf) {
-                Ok(0) => {
-                    let _ = on_event.send(TerminalEvent::Exit { code: Some(0) });
-                    break;
-                }
+                Ok(0) => break,
                 Ok(n) => {
                     let _ = on_event.send(TerminalEvent::Output {
                         data: buf[..n].to_vec(),
                     });
                 }
-                Err(_) => {
-                    let _ = on_event.send(TerminalEvent::Exit { code: None });
-                    break;
-                }
+                Err(_) => break,
             }
         }
-        // Clean up
-        if let Ok(mut terminals) = terminals_ref.lock() {
-            terminals.remove(&tid);
-        }
+        // Get real exit code from child process
+        let exit_code = if let Ok(mut terminals) = terminals_ref.lock() {
+            if let Some(mut term) = terminals.remove(&tid) {
+                term.child
+                    .wait()
+                    .ok()
+                    .map(|status| status.exit_code() as i32)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let _ = on_event.send(TerminalEvent::Exit { code: exit_code });
     });
 
     // Send initial command after a delay if provided

@@ -17,7 +17,6 @@ export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     try {
@@ -26,8 +25,6 @@ export function useProjects() {
       setWorkspaces(w);
     } catch (err) {
       console.error("Failed to load:", err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -56,7 +53,6 @@ export function useProjects() {
       }
       const p = await getAllProjects();
       setProjects(p);
-      setLoading(false);
     })();
   }, [syncWorkspace]);
 
@@ -117,19 +113,13 @@ export function useProjects() {
     [loadAll]
   );
 
-  const deselectProject = useCallback(() => {
-    setSelectedProject(null);
-  }, []);
-
   return {
     projects,
     workspaces,
     selectedProject,
-    loading,
     addProject: handleAddProject,
     addWorkspace: handleAddWorkspace,
     selectProject: handleSelectProject,
-    deselectProject,
     removeProject: handleRemoveProject,
     removeWorkspace: handleRemoveWorkspace,
   };

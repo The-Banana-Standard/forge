@@ -22,7 +22,7 @@ let uuidCounter = 0;
 
 beforeEach(() => {
   uuidCounter = 0;
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}`);
+  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`);
   mockGetTasks.mockReset().mockResolvedValue([]);
   mockAddTask.mockReset().mockResolvedValue(undefined);
   mockToggleTask.mockReset().mockResolvedValue(undefined);

@@ -1,34 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-
-interface DailyActivity {
-  date: string;
-  messageCount: number;
-  sessionCount: number;
-  toolCallCount: number;
-}
-
-interface ModelUsage {
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadInputTokens: number;
-  cacheCreationInputTokens: number;
-}
-
-interface ClaudeUsageStats {
-  totalSessions: number;
-  totalMessages: number;
-  firstSessionDate: string | null;
-  dailyActivity: DailyActivity[];
-  modelUsage: Record<string, ModelUsage>;
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toString();
-}
+import type { ClaudeUsageStats } from "../../types/project-info";
+import { formatTokens } from "../../types/project-info";
 
 function getToday(): string {
   const d = new Date();

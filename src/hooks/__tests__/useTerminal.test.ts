@@ -10,11 +10,10 @@ vi.mock("../../services/terminal-service", () => ({
 
 // Spy on crypto.randomUUID instead of replacing the entire object
 let uuidCounter = 0;
-const originalRandomUUID = crypto.randomUUID.bind(crypto);
 
 beforeEach(() => {
   uuidCounter = 0;
-  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}`);
+  vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`);
   vi.mocked(closeTerminal).mockClear();
 });
 

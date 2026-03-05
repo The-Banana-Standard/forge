@@ -33,6 +33,12 @@ export function TerminalView({
   const terminalIdRef = useRef<string | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
+  // Keep latest callbacks in refs to avoid stale closures
+  const onTerminalSpawnedRef = useRef(onTerminalSpawned);
+  onTerminalSpawnedRef.current = onTerminalSpawned;
+  const onTabDiedRef = useRef(onTabDied);
+  onTabDiedRef.current = onTabDied;
+
   // Init terminal on first visibility — no cleanup (xterm persists)
   useEffect(() => {
     if (!containerRef.current || spawnedRef.current || !isVisible) return;
@@ -88,7 +94,7 @@ export function TerminalView({
       xterm.write("Install it with:\r\n");
       xterm.write("  \x1b[33mnpm install -g @anthropic-ai/claude-code\x1b[0m\r\n\r\n");
       xterm.write("Then close this tab and try again.\r\n");
-      onTabDied?.();
+      onTabDiedRef.current?.();
       return;
     }
 
@@ -112,7 +118,7 @@ export function TerminalView({
           xterm.write(new Uint8Array(event.data));
         } else if (event.type === "exit") {
           xterm.write("\r\n\x1b[90m[Process exited]\x1b[0m\r\n");
-          onTabDied?.();
+          onTabDiedRef.current?.();
         }
       },
       initialCmd,
@@ -120,7 +126,7 @@ export function TerminalView({
     )
       .then((termId) => {
         terminalIdRef.current = termId;
-        onTerminalSpawned(tab.id, termId);
+        onTerminalSpawnedRef.current(tab.id, termId);
 
         xterm.onData((data) => {
           writeToTerminal(termId, data).catch(console.error);
@@ -154,7 +160,8 @@ export function TerminalView({
   // Re-fit when becoming visible again or when split mode changes
   useEffect(() => {
     if (isVisible && fitAddonRef.current && xtermRef.current && terminalIdRef.current) {
-      const fit = () => {
+      // Use requestAnimationFrame to wait for layout, then fit once
+      const rafId = requestAnimationFrame(() => {
         fitAddonRef.current?.fit();
         if (terminalIdRef.current && xtermRef.current) {
           resizeTerminal(
@@ -163,11 +170,8 @@ export function TerminalView({
             xtermRef.current.cols
           ).catch(console.error);
         }
-      };
-      // Multiple delays to handle various layout timing
-      setTimeout(fit, 50);
-      setTimeout(fit, 150);
-      setTimeout(fit, 400);
+      });
+      return () => cancelAnimationFrame(rafId);
     }
   }, [isVisible, splitMode]);
 
