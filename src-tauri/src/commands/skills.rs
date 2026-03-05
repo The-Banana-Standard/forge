@@ -29,10 +29,10 @@ pub struct InstalledSkillStatus {
 }
 
 fn skip_yaml_frontmatter(content: &str) -> &str {
-    if content.starts_with("---") {
+    if let Some(rest) = content.strip_prefix("---") {
         // Find the closing ---
-        if let Some(end) = content[3..].find("\n---") {
-            let after = &content[3 + end + 4..];
+        if let Some(end) = rest.find("\n---") {
+            let after = &rest[end + 4..];
             return after.trim_start_matches('\n');
         }
     }

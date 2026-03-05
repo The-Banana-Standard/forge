@@ -140,7 +140,7 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
         let repo_clone = repo.clone();
         let path_clone = project_path.clone();
         handles.push(tokio::task::spawn_blocking(move || {
-            let repo_short = repo_clone.split('/').last().unwrap_or(&repo_clone).to_string();
+            let repo_short = repo_clone.rsplit('/').next().unwrap_or(&repo_clone).to_string();
             let mut prs = Vec::new();
             let mut issues = Vec::new();
 

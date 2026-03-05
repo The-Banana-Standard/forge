@@ -237,11 +237,11 @@ fn read_readme_excerpt(path: &Path) -> Option<String> {
         if readme.exists() {
             if let Ok(content) = fs::read_to_string(&readme) {
                 // Extract first meaningful paragraph after the title
-                let mut lines = content.lines();
+                let lines = content.lines();
                 let mut found_title = false;
                 let mut excerpt = String::new();
 
-                while let Some(line) = lines.next() {
+                for line in lines {
                     let trimmed = line.trim();
                     // Skip title lines
                     if trimmed.starts_with('#') {

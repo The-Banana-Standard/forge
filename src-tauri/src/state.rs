@@ -7,7 +7,9 @@ pub struct TerminalInstance {
     pub master: Box<dyn MasterPty + Send>,
     pub writer: Box<dyn Write + Send>,
     pub child: Box<dyn Child + Send>,
+    #[allow(dead_code)]
     pub project_path: String,
+    #[allow(dead_code)]
     pub is_claude_session: bool,
 }
 
