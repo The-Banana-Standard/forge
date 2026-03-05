@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF8C33"/>
+      <stop offset="100%" stop-color="#FF6B00"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0D0D0D"/>
+  <!-- Anvil shape — flat top surface -->
+  <path d="M128 320 L384 320 L400 352 L368 384 L144 384 L112 352 Z" fill="url(#glow)"/>
+  <!-- Hammer — angled above anvil -->
+  <rect x="220" y="128" width="72" height="160" rx="8" fill="#E8E8E8" transform="rotate(-12 256 208)"/>
+  <!-- Hammer head -->
+  <rect x="196" y="108" width="120" height="52" rx="8" fill="url(#glow)" transform="rotate(-12 256 134)"/>
+  <!-- Sparks -->
+  <circle cx="168" cy="296" r="6" fill="#FFB366" opacity="0.9"/>
+  <circle cx="148" cy="276" r="4" fill="#FFD699" opacity="0.7"/>
+  <circle cx="344" cy="296" r="6" fill="#FFB366" opacity="0.9"/>
+  <circle cx="364" cy="276" r="4" fill="#FFD699" opacity="0.7"/>
+  <circle cx="184" cy="264" r="3" fill="#FFCC80" opacity="0.5"/>
+  <circle cx="328" cy="264" r="3" fill="#FFCC80" opacity="0.5"/>
+</svg>
