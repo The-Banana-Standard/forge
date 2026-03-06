@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-03-05
+
+### Fixed
+- Claude CLI not found when Forge is launched from macOS Finder/Dock due to minimal PATH
+
+## [0.1.1] - 2026-03-05
+
+### Fixed
+- App icons now match logo.svg (previously showed default Tauri icon)
+- macOS builds are now code-signed and notarized
+
+## [0.1.0] - 2026-03-05
+
 ### Added
 - Workspace management with project grouping
 - Terminal multiplexer with split view for Claude Code and shell sessions
@@ -17,4 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark theme UI
 - Multi-platform support (macOS, Linux, Windows)
 
-[Unreleased]: https://github.com/The-Banana-Standard/forge/commits/main
+[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/The-Banana-Standard/forge/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/The-Banana-Standard/forge/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/The-Banana-Standard/forge/releases/tag/v0.1.0

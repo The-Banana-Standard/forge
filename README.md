@@ -43,7 +43,7 @@ Download the latest release for your platform from the [Releases](https://github
 | Linux (Debian/Ubuntu) | `Forge_x.x.x_amd64.deb` |
 | Linux (other) | `Forge_x.x.x_amd64.AppImage` |
 
-> **macOS users:** The app is not notarized with Apple, so macOS may show "Forge is damaged and can't be opened." To fix this, run the following after installing:
+> **macOS users:** The app is code-signed and notarized. If you installed an older version and macOS shows "Forge is damaged and can't be opened", run:
 > ```bash
 > xattr -cr /Applications/Forge.app
 > ```
