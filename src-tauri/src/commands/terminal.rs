@@ -5,6 +5,50 @@ use std::io::{Read, Write};
 use std::sync::Arc;
 use tauri::{ipc::Channel, State};
 
+/// Ensure PATH includes common locations where CLI tools are installed.
+/// macOS apps launched from Finder/Dock get a minimal PATH that typically
+/// excludes directories like ~/.local/bin, ~/.cargo/bin, /usr/local/bin,
+/// and nvm/fnm/Homebrew paths where `claude` may be installed.
+fn ensure_full_path() -> String {
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let home = std::env::var("HOME").unwrap_or_default();
+
+    let extra_dirs = [
+        format!("{}/.local/bin", home),
+        format!("{}/.cargo/bin", home),
+        "/usr/local/bin".to_string(),
+        "/opt/homebrew/bin".to_string(),
+        "/opt/homebrew/sbin".to_string(),
+        format!("{}/.nvm/versions/node", home), // nvm — we'll glob below
+        format!("{}/.fnm/aliases/default/bin", home),
+        format!("{}/Library/Application Support/fnm/aliases/default/bin", home),
+    ];
+
+    let mut paths: Vec<String> = current_path.split(':').map(|s| s.to_string()).collect();
+
+    for dir in &extra_dirs {
+        if !paths.contains(dir) && std::path::Path::new(dir).exists() {
+            paths.push(dir.clone());
+        }
+    }
+
+    // Also pick up the latest nvm node version if available
+    let nvm_dir = format!("{}/.nvm/versions/node", home);
+    if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
+        let mut versions: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+        versions.sort_by(|a, b| b.file_name().cmp(&a.file_name()));
+        if let Some(latest) = versions.first() {
+            let bin = latest.path().join("bin");
+            let bin_str = bin.to_string_lossy().to_string();
+            if !paths.contains(&bin_str) && bin.exists() {
+                paths.push(bin_str);
+            }
+        }
+    }
+
+    paths.join(":")
+}
+
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClaudeCliStatus {
@@ -14,12 +58,17 @@ pub struct ClaudeCliStatus {
 
 #[tauri::command]
 pub fn check_claude_cli() -> ClaudeCliStatus {
+    let full_path = ensure_full_path();
     let (cmd, arg) = if cfg!(target_os = "windows") {
         ("where", "claude")
     } else {
         ("which", "claude")
     };
-    match std::process::Command::new(cmd).arg(arg).output() {
+    match std::process::Command::new(cmd)
+        .arg(arg)
+        .env("PATH", &full_path)
+        .output()
+    {
         Ok(output) if output.status.success() => {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
             ClaudeCliStatus {
@@ -88,13 +137,19 @@ pub fn spawn_terminal(
     cmd.cwd(&project_path);
 
     // Clear env and rebuild without Claude Code vars to avoid nested session errors
+    let full_path = ensure_full_path();
     cmd.env_clear();
     for (key, value) in std::env::vars() {
         if key.starts_with("CLAUDECODE") || key.starts_with("CLAUDE_CODE") {
             continue;
         }
+        // Replace PATH with the augmented version
+        if key == "PATH" {
+            continue;
+        }
         cmd.env(key, value);
     }
+    cmd.env("PATH", &full_path);
     cmd.env("TERM", "xterm-256color");
 
     let child = pair
