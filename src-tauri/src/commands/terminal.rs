@@ -36,7 +36,7 @@ fn ensure_full_path() -> String {
     let nvm_dir = format!("{}/.nvm/versions/node", home);
     if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
         let mut versions: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-        versions.sort_by(|a, b| b.file_name().cmp(&a.file_name()));
+        versions.sort_by_key(|e| std::cmp::Reverse(e.file_name()));
         if let Some(latest) = versions.first() {
             let bin = latest.path().join("bin");
             let bin_str = bin.to_string_lossy().to_string();
