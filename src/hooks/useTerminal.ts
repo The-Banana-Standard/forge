@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { TerminalTab } from "../types/terminal";
 import { closeTerminal } from "../services/terminal-service";
 
@@ -6,13 +6,15 @@ export const HOME_TAB_ID = "home";
 
 export function useTerminal() {
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
   const [activeTabId, setActiveTabId] = useState<string | null>(HOME_TAB_ID);
   const [splitMode, setSplitMode] = useState(false);
 
   const addTab = useCallback(
     (projectPath: string, isClaudeSession: boolean, sessionId?: string, initialPrompt?: string) => {
       const id = crypto.randomUUID();
-      const projectName = projectPath.split("/").pop() || projectPath;
+      const projectName = projectPath.split(/[/\\]/).pop() || projectPath;
       const isSlashCommand = initialPrompt?.startsWith("/");
       const label = initialPrompt
         ? isSlashCommand
@@ -57,7 +59,7 @@ export function useTerminal() {
         }
 
         const id = crypto.randomUUID();
-        const projectName = projectPath.split("/").pop() || projectPath;
+        const projectName = projectPath.split(/[/\\]/).pop() || projectPath;
         const newTab: TerminalTab = {
           id,
           terminalId: null,
@@ -109,20 +111,19 @@ export function useTerminal() {
   }, []);
 
   const removeTab = useCallback(
-    (tabId: string) => {
+    async (tabId: string) => {
       if (tabId === HOME_TAB_ID) return;
 
-      // Extract terminal ID and close it outside of the state updater
-      setTabs((prev) => {
-        const tab = prev.find((t) => t.id === tabId);
-        if (tab?.terminalId) {
-          // Fire-and-forget — side effect happens after we read the value
-          closeTerminal(tab.terminalId).catch(() => {});
-        }
-        return prev;
-      });
+      // Read terminal ID from ref (always current) before updating state
+      const tab = tabsRef.current.find((t) => t.id === tabId);
+      const terminalIdToClose = tab?.terminalId ?? null;
 
       setTabs((prev) => prev.filter((t) => t.id !== tabId));
+
+      if (terminalIdToClose) {
+        closeTerminal(terminalIdToClose).catch(() => {});
+      }
+
       setActiveTabId((currentActive) => {
         if (currentActive === tabId) return HOME_TAB_ID;
         return currentActive;

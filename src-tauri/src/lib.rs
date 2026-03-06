@@ -34,9 +34,12 @@ pub fn run() {
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
-                // Kill all PTY processes on window close
+                // Kill all PTY child processes, then drop terminal instances
                 if let Some(state) = window.try_state::<AppState>() {
                     if let Ok(mut terminals) = state.terminals.lock() {
+                        for (_, term) in terminals.iter_mut() {
+                            let _ = term.child.kill();
+                        }
                         terminals.clear();
                     }
                 }

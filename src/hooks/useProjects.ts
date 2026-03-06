@@ -59,7 +59,7 @@ export function useProjects() {
   const handleAddWorkspace = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
     if (selected && typeof selected === "string") {
-      const name = selected.split("/").pop() || selected;
+      const name = selected.split(/[/\\]/).pop() || selected;
       const id = crypto.randomUUID();
       await addWorkspace(id, name, selected);
 
@@ -79,7 +79,7 @@ export function useProjects() {
   const handleAddProject = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
     if (selected && typeof selected === "string") {
-      const name = selected.split("/").pop() || selected;
+      const name = selected.split(/[/\\]/).pop() || selected;
       const id = crypto.randomUUID();
       await addProject(id, name, selected);
       await loadAll();

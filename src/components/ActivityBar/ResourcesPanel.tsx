@@ -1,3 +1,5 @@
+import { open } from "@tauri-apps/plugin-shell";
+
 interface ResourceLink {
   title: string;
   description: string;
@@ -75,7 +77,7 @@ export function ResourcesPanel() {
   const categories = [...new Set(RESOURCES.map((r) => r.category))];
 
   const openLink = (url: string) => {
-    window.open(url, "_blank");
+    open(url);
   };
 
   return (
