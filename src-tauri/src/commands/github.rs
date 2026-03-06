@@ -1,3 +1,4 @@
+use super::terminal::ensure_full_path;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
@@ -112,7 +113,8 @@ fn find_github_repo(project_path: &str) -> Option<String> {
 #[tauri::command]
 pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
     // Check if gh CLI is available
-    let gh_check = Command::new("gh").arg("--version").output();
+    let full_path = ensure_full_path();
+    let gh_check = Command::new("gh").arg("--version").env("PATH", &full_path).output();
     if !matches!(gh_check, Ok(ref o) if o.status.success()) {
         return GitHubData {
             prs: vec![],
@@ -139,6 +141,7 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
     for (repo, project_path) in repo_to_path {
         let repo_clone = repo.clone();
         let path_clone = project_path.clone();
+        let task_path = full_path.clone();
         handles.push(tokio::task::spawn_blocking(move || {
             let repo_short = repo_clone.rsplit('/').next().unwrap_or(&repo_clone).to_string();
             let mut prs = Vec::new();
@@ -152,6 +155,7 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
                     "--json", "number,title,author,url,createdAt,isDraft,reviewDecision",
                     "--repo", &repo_clone,
                 ])
+                .env("PATH", &task_path)
                 .output()
             {
                 if output.status.success() {
@@ -184,6 +188,7 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
                     "--json", "number,title,author,url,createdAt,isDraft,reviewDecision",
                     "--repo", &repo_clone,
                 ])
+                .env("PATH", &task_path)
                 .output()
             {
                 if output.status.success() {
@@ -218,6 +223,7 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
                     "--json", "number,title,url,createdAt,labels",
                     "--repo", &repo_clone,
                 ])
+                .env("PATH", &task_path)
                 .output()
             {
                 if output.status.success() {
