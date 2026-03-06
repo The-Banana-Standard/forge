@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { checkClaudeCli } from "./services/terminal-service";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { checkClaudeCli, writeToTerminal } from "./services/terminal-service";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { WorkspaceOverview } from "./components/WorkspaceOverview/WorkspaceOverview";
@@ -42,6 +43,38 @@ function App() {
 
   useEffect(() => {
     checkClaudeCli().then((status) => setClaudeCliAvailable(status.available));
+  }, []);
+
+  // Drag-and-drop: write file paths into the active terminal
+  const [isDragging, setIsDragging] = useState(false);
+  const activeTerminalIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const activeTab = tabs.find((t) => t.id === activeTabId);
+    activeTerminalIdRef.current = activeTab?.terminalId ?? null;
+  }, [tabs, activeTabId]);
+
+  useEffect(() => {
+    const unlisten = getCurrentWindow().onDragDropEvent((event) => {
+      if (event.payload.type === "enter" || event.payload.type === "over") {
+        setIsDragging(true);
+      } else if (event.payload.type === "leave") {
+        setIsDragging(false);
+      } else if (event.payload.type === "drop") {
+        setIsDragging(false);
+        const paths = event.payload.paths;
+        const termId = activeTerminalIdRef.current;
+        if (termId && paths.length > 0) {
+          const pathStr = paths
+            .map((p) => (p.includes(" ") ? `"${p}"` : p))
+            .join(" ");
+          writeToTerminal(termId, pathStr).catch(console.error);
+        }
+      }
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, []);
 
   // Controls whether the right sidebar skills panel opens to Browse tab
@@ -262,6 +295,7 @@ function App() {
                       onTerminalSpawned={setTerminalId}
                       claudeCliAvailable={claudeCliAvailable ?? true}
                       onTabDied={() => markTabDead(tab.id)}
+                      isDragging={isDragging && isTabVisible}
                     />
                   </div>
                 ) : (
@@ -273,6 +307,7 @@ function App() {
                     onTerminalSpawned={setTerminalId}
                     claudeCliAvailable={claudeCliAvailable ?? true}
                     onTabDied={() => markTabDead(tab.id)}
+                    isDragging={isDragging && isTabVisible}
                   />
                 );
               })}

@@ -9,7 +9,7 @@ use tauri::{ipc::Channel, State};
 /// macOS apps launched from Finder/Dock get a minimal PATH that typically
 /// excludes directories like ~/.local/bin, ~/.cargo/bin, /usr/local/bin,
 /// and nvm/fnm/Homebrew paths where `claude` may be installed.
-fn ensure_full_path() -> String {
+pub(crate) fn ensure_full_path() -> String {
     let current_path = std::env::var("PATH").unwrap_or_default();
     let home = std::env::var("HOME").unwrap_or_default();
 

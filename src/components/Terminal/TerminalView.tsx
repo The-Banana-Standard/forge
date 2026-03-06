@@ -16,6 +16,7 @@ interface TerminalViewProps {
   onTerminalSpawned: (tabId: string, terminalId: string) => void;
   claudeCliAvailable?: boolean;
   onTabDied?: () => void;
+  isDragging?: boolean;
 }
 
 export function TerminalView({
@@ -25,6 +26,7 @@ export function TerminalView({
   onTerminalSpawned,
   claudeCliAvailable,
   onTabDied,
+  isDragging,
 }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
@@ -181,7 +183,17 @@ export function TerminalView({
       className="terminal-container"
       style={{
         display: isVisible ? "block" : "none",
+        position: "relative",
       }}
-    />
+    >
+      {isDragging && (
+        <div className="terminal-drop-overlay">
+          <div className="terminal-drop-overlay-content">
+            <span className="terminal-drop-overlay-icon">+</span>
+            <span>Drop files to paste path</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

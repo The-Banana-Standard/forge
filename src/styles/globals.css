@@ -1001,6 +1001,37 @@ html, body, #root {
   overflow-y: auto !important;
 }
 
+/* ── Drop Overlay ── */
+.terminal-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 0, 0.08);
+  border: 2px dashed var(--accent-orange);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.terminal-drop-overlay-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  color: var(--accent-orange);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.terminal-drop-overlay-icon {
+  font-size: 18px;
+  font-weight: 700;
+}
+
 /* ── Split Pane ── */
 .split-pane {
   display: flex;
