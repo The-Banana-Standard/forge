@@ -35,6 +35,19 @@ Forge is a Tauri v2 desktop app that lets you manage project folders, launch Cla
 
 Download the latest release for your platform from the [Releases](https://github.com/The-Banana-Standard/forge/releases) page.
 
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `Forge_x.x.x_aarch64.dmg` |
+| macOS (Intel) | `Forge_x.x.x_x64.dmg` |
+| Windows | `Forge_x.x.x_x64-setup.exe` |
+| Linux (Debian/Ubuntu) | `Forge_x.x.x_amd64.deb` |
+| Linux (other) | `Forge_x.x.x_amd64.AppImage` |
+
+> **macOS users:** The app is not notarized with Apple, so macOS may show "Forge is damaged and can't be opened." To fix this, run the following after installing:
+> ```bash
+> xattr -cr /Applications/Forge.app
+> ```
+
 ### Build from source
 
 **Prerequisites:**
