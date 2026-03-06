@@ -1,6 +1,6 @@
 [package]
 name = "forge"
-version = "0.1.2"
+version = "0.1.3"
 description = "Desktop workspace manager and terminal multiplexer for Claude Code"
 authors = ["Anthony Mazzola"]
 license = "MIT"
