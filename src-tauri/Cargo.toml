@@ -1,5 +1,5 @@
 [package]
-name = "forge"
+name = "canopy"
 version = "0.1.5"
 description = "Desktop workspace manager and terminal multiplexer for Claude Code"
 authors = ["Anthony Mazzola"]
@@ -7,7 +7,7 @@ license = "MIT"
 edition = "2021"
 
 [lib]
-name = "forge_lib"
+name = "canopy_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

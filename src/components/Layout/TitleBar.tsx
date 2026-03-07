@@ -25,7 +25,7 @@ export function TitleBar({ onGoHome }: TitleBarProps) {
         }}
         onDoubleClick={() => appWindow.toggleMaximize()}
       >
-        <span className="title-bar-text">Forge</span>
+        <span className="title-bar-text">Canopy</span>
       </div>
       <div className="title-bar-controls">
         <button

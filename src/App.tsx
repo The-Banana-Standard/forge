@@ -334,7 +334,7 @@ function App() {
           {isHomeActive && !hasWorkspace && (
             <div className="no-project-selected">
               <div className="no-project-icon">&gt;_</div>
-              <h2>Forge</h2>
+              <h2>Canopy</h2>
               <p>Add a workspace folder to get started.</p>
             </div>
           )}

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO="The-Banana-Standard/forge"
-APP_NAME="Forge"
+REPO="The-Banana-Standard/canopy"
+APP_NAME="Canopy"
 
 # Colors
 RED='\033[0;31m'
@@ -46,7 +46,7 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 if [ "$PLATFORM" = "macos" ]; then
-  DMG_NAME="Forge_${VERSION}_${ARCH_LABEL}.dmg"
+  DMG_NAME="Canopy_${VERSION}_${ARCH_LABEL}.dmg"
   DMG_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/$DMG_NAME"
 
   info "Downloading $DMG_NAME..."
@@ -66,7 +66,7 @@ if [ "$PLATFORM" = "macos" ]; then
 
 elif [ "$PLATFORM" = "linux" ]; then
   if command -v dpkg &>/dev/null; then
-    DEB_NAME="Forge_${VERSION}_amd64.deb"
+    DEB_NAME="Canopy_${VERSION}_amd64.deb"
     DEB_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/$DEB_NAME"
 
     info "Downloading $DEB_NAME..."
@@ -74,9 +74,9 @@ elif [ "$PLATFORM" = "linux" ]; then
 
     info "Installing (may need sudo)..."
     sudo dpkg -i "$TMPDIR/$DEB_NAME"
-    info "$APP_NAME v$VERSION installed. Run 'forge' to start."
+    info "$APP_NAME v$VERSION installed. Run 'canopy' to start."
   else
-    APPIMAGE_NAME="Forge_${VERSION}_amd64.AppImage"
+    APPIMAGE_NAME="Canopy_${VERSION}_amd64.AppImage"
     APPIMAGE_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/$APPIMAGE_NAME"
 
     info "Downloading $APPIMAGE_NAME..."
@@ -84,8 +84,8 @@ elif [ "$PLATFORM" = "linux" ]; then
 
     INSTALL_DIR="${HOME}/.local/bin"
     mkdir -p "$INSTALL_DIR"
-    mv "$TMPDIR/$APPIMAGE_NAME" "$INSTALL_DIR/forge"
-    chmod +x "$INSTALL_DIR/forge"
-    info "$APP_NAME v$VERSION installed to $INSTALL_DIR/forge"
+    mv "$TMPDIR/$APPIMAGE_NAME" "$INSTALL_DIR/canopy"
+    chmod +x "$INSTALL_DIR/canopy"
+    info "$APP_NAME v$VERSION installed to $INSTALL_DIR/canopy"
   fi
 fi

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Forge is a Tauri v2 desktop app that manages Claude Code CLI sessions. It acts as a workspace manager and terminal multiplexer: you add project folders, then launch Claude Code sessions or shell terminals against them. Everything runs locally -- no external APIs.
+Canopy is a Tauri v2 desktop app that manages Claude Code CLI sessions. It acts as a workspace manager and terminal multiplexer: you add project folders, then launch Claude Code sessions or shell terminals against them. Everything runs locally -- no external APIs.
 
 ## Tech Stack
 

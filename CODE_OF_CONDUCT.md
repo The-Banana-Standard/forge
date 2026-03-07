@@ -31,7 +31,7 @@ Examples of unacceptable behavior:
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported by opening an issue or contacting the maintainers via
-[GitHub Security Advisories](https://github.com/The-Banana-Standard/forge/security/advisories).
+[GitHub Security Advisories](https://github.com/The-Banana-Standard/canopy/security/advisories).
 
 All complaints will be reviewed and investigated promptly and fairly.
 

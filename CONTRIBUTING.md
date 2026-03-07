@@ -1,6 +1,6 @@
-# Contributing to Forge
+# Contributing to Canopy
 
-Thanks for your interest in contributing to Forge! This guide will help you get set up and submit your first contribution.
+Thanks for your interest in contributing to Canopy! This guide will help you get set up and submit your first contribution.
 
 ## Prerequisites
 
@@ -14,8 +14,8 @@ Thanks for your interest in contributing to Forge! This guide will help you get 
 
 ```bash
 # Clone the repo
-git clone https://github.com/The-Banana-Standard/forge.git
-cd forge
+git clone https://github.com/The-Banana-Standard/canopy.git
+cd canopy
 
 # Install frontend dependencies
 npm install
