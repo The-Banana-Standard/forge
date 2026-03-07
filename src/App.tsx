@@ -51,6 +51,8 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const activeTerminalIdRef = useRef<string | null>(null);
   const hoveredTerminalIdRef = useRef<string | null>(null);
+  // Registry of terminal container DOM elements for hit-testing during OS drag
+  const terminalElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
   useEffect(() => {
     const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -61,16 +63,44 @@ function App() {
     hoveredTerminalIdRef.current = terminalId;
   }, []);
 
+  const registerTerminalElement = useCallback((terminalId: string, el: HTMLElement | null) => {
+    if (el) {
+      terminalElementsRef.current.set(terminalId, el);
+    } else {
+      terminalElementsRef.current.delete(terminalId);
+    }
+  }, []);
+
+  // Hit-test which terminal pane contains the given point
+  const findTerminalAtPoint = useCallback((x: number, y: number): string | null => {
+    for (const [termId, el] of terminalElementsRef.current) {
+      const rect = el.getBoundingClientRect();
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        return termId;
+      }
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     const unlisten = getCurrentWindow().onDragDropEvent((event) => {
       if (event.payload.type === "enter" || event.payload.type === "over") {
         setIsDragging(true);
+        // Update hovered terminal using drag position (mouse events don't fire during OS drag)
+        if (event.payload.position) {
+          const hit = findTerminalAtPoint(event.payload.position.x, event.payload.position.y);
+          if (hit) hoveredTerminalIdRef.current = hit;
+        }
       } else if (event.payload.type === "leave") {
         setIsDragging(false);
       } else if (event.payload.type === "drop") {
         setIsDragging(false);
         const paths = event.payload.paths;
-        // Prefer the hovered terminal (for split mode), fall back to active
+        // Use position from drop event for final hit-test
+        if (event.payload.position) {
+          const hit = findTerminalAtPoint(event.payload.position.x, event.payload.position.y);
+          if (hit) hoveredTerminalIdRef.current = hit;
+        }
         const termId = hoveredTerminalIdRef.current || activeTerminalIdRef.current;
         if (termId && paths.length > 0) {
           const pathStr = paths
@@ -83,7 +113,7 @@ function App() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, []);
+  }, [findTerminalAtPoint]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -395,6 +425,7 @@ function App() {
                       onTabDied={() => markTabDead(tab.id)}
                       isDragging={isDragging && isTabVisible}
                       onTerminalHover={handleTerminalHover}
+                      onRegisterElement={registerTerminalElement}
                     />
                   </div>
                 ) : (
