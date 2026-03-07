@@ -1,39 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="glow" x1="0.5" y1="0" x2="0.5" y2="1">
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#FF8C33"/>
       <stop offset="100%" stop-color="#FF6B00"/>
     </linearGradient>
-    <linearGradient id="dim" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#FF8C33"/>
-      <stop offset="100%" stop-color="#CC5500"/>
-    </linearGradient>
+    <clipPath id="rounded">
+      <rect width="512" height="512" rx="96"/>
+    </clipPath>
   </defs>
-  <!-- Background -->
-  <rect width="512" height="512" fill="#0D0D0D"/>
-  <g transform="translate(256, 270)">
-    <!-- Trunk - slightly curved like a palm/banana trunk -->
-    <path d="M0 40 Q-8 0 -4 -60 Q0 -100 4 -130" stroke="url(#dim)" stroke-width="18" fill="none" stroke-linecap="round"/>
-    <!-- Banana-style leaves drooping from the crown -->
-    <!-- Top leaf - upward right -->
-    <path d="M4 -130 Q40 -190 90 -170" stroke="url(#glow)" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <path d="M4 -130 Q50 -180 90 -170 Q50 -160 10 -120" fill="url(#glow)" opacity="0.8"/>
-    <!-- Top leaf - upward left -->
-    <path d="M4 -130 Q-35 -195 -85 -175" stroke="url(#glow)" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <path d="M4 -130 Q-45 -185 -85 -175 Q-45 -165 0 -120" fill="url(#glow)" opacity="0.8"/>
-    <!-- Middle leaf - right drooping -->
-    <path d="M0 -120 Q60 -140 110 -100" stroke="url(#glow)" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <path d="M0 -120 Q65 -130 110 -100 Q60 -90 5 -105" fill="url(#glow)" opacity="0.6"/>
-    <!-- Middle leaf - left drooping -->
-    <path d="M0 -120 Q-60 -140 -110 -95" stroke="url(#glow)" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <path d="M0 -120 Q-65 -130 -110 -95 Q-60 -85 -5 -105" fill="url(#glow)" opacity="0.6"/>
-    <!-- Lower leaf - right hanging -->
-    <path d="M-2 -110 Q50 -90 95 -40" stroke="url(#glow)" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M-2 -110 Q55 -80 95 -40 Q45 -50 0 -95" fill="url(#glow)" opacity="0.4"/>
-    <!-- Lower leaf - left hanging -->
-    <path d="M-2 -110 Q-55 -90 -100 -35" stroke="url(#glow)" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M-2 -110 Q-60 -80 -100 -35 Q-50 -50 -5 -95" fill="url(#glow)" opacity="0.4"/>
-    <!-- Ground line -->
-    <line x1="-50" y1="50" x2="50" y2="50" stroke="url(#glow)" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
+  <!-- Rounded background -->
+  <g clip-path="url(#rounded)">
+    <rect width="512" height="512" fill="#0D0D0D"/>
+  </g>
+  <rect width="512" height="512" rx="96" fill="#0D0D0D"/>
+  <g transform="translate(256, 265)">
+    <!-- Trunk - thick, slightly curved -->
+    <path d="M-2 50 C-6 20, -6 -30, 0 -80" stroke="url(#glow)" stroke-width="24" fill="none" stroke-linecap="round" opacity="0.85"/>
+    <!-- Large leaves - broad banana-style with filled shapes -->
+    <!-- Top-right leaf -->
+    <path d="M0 -80 C20 -130, 70 -155, 105 -140 C70 -135, 25 -115, 0 -75" fill="url(#glow)"/>
+    <!-- Top-left leaf -->
+    <path d="M0 -80 C-20 -130, -70 -155, -105 -140 C-70 -135, -25 -115, 0 -75" fill="url(#glow)"/>
+    <!-- Mid-right leaf -->
+    <path d="M0 -75 C30 -110, 85 -115, 120 -85 C80 -90, 35 -85, 0 -65" fill="url(#glow)" opacity="0.75"/>
+    <!-- Mid-left leaf -->
+    <path d="M0 -75 C-30 -110, -85 -115, -120 -85 C-80 -90, -35 -85, 0 -65" fill="url(#glow)" opacity="0.75"/>
+    <!-- Lower-right leaf (drooping) -->
+    <path d="M0 -65 C35 -75, 90 -55, 115 -15 C80 -35, 35 -50, 0 -55" fill="url(#glow)" opacity="0.55"/>
+    <!-- Lower-left leaf (drooping) -->
+    <path d="M0 -65 C-35 -75, -90 -55, -115 -15 C-80 -35, -35 -50, 0 -55" fill="url(#glow)" opacity="0.55"/>
+    <!-- Lowest right leaf (most droopy) -->
+    <path d="M0 -58 C30 -40, 75 -10, 90 35 C65 5, 30 -20, 0 -45" fill="url(#glow)" opacity="0.35"/>
+    <!-- Lowest left leaf (most droopy) -->
+    <path d="M0 -58 C-30 -40, -75 -10, -90 35 C-65 5, -30 -20, 0 -45" fill="url(#glow)" opacity="0.35"/>
   </g>
 </svg>
