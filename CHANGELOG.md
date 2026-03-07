@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-03-07
+
+### Added
+- Keyboard shortcuts — Cmd+T (new shell), Cmd+W (close tab), Cmd+1-9 (switch tabs)
+- Terminal search — Cmd+F to find text in terminal output with next/prev navigation
+- Session persistence — tabs restore automatically across app restarts
+- Tab reordering — drag and drop tabs to rearrange them
+
+### Fixed
+- GitHub dashboard now shows PRs assigned to you (not just authored/review-requested)
+- Daily Planner no longer loses typed text when switching tabs
+- Closing a tab in split mode now selects an adjacent tab instead of jumping to Home
+- File drops in split mode now target the hovered terminal pane
+- Tab drag reorder no longer causes text selection ghost artifacts
+
 ## [0.1.3] - 2026-03-05
 
 ### Added
@@ -38,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark theme UI
 - Multi-platform support (macOS, Linux, Windows)
 
-[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/The-Banana-Standard/forge/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/The-Banana-Standard/forge/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/The-Banana-Standard/forge/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/The-Banana-Standard/forge/compare/v0.1.0...v0.1.1
