@@ -116,7 +116,6 @@ export function TerminalView({
 
     if (tab.isWorkspaceAgent && tab.workspaceContext) {
       sysPrompt = tab.workspaceContext;
-      initialCmd = "Give me a quick status update — what have I been working on recently and what should I pick up next?";
     } else if (tab.initialPrompt) {
       initialCmd = tab.initialPrompt;
     }
