@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="#quick-install">Install</a> &middot;
   <a href="#features">Features</a> &middot;
-  <a href="#installation">Installation</a> &middot;
   <a href="#development">Development</a> &middot;
   <a href="#contributing">Contributing</a>
 </p>
@@ -19,15 +19,32 @@
 
 Forge is a Tauri v2 desktop app that lets you manage project folders, launch Claude Code sessions and shell terminals against them, and keep everything organized in workspaces. Everything runs locally -- no external APIs, no cloud dependencies.
 
+## Quick Install
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/The-Banana-Standard/forge/main/install.sh | sh
+```
+
+**Windows:** Download the latest `.exe` or `.msi` from the [Releases](https://github.com/The-Banana-Standard/forge/releases) page.
+
+> **Prerequisite:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) must be installed (`npm install -g @anthropic-ai/claude-code`).
+
 ## Features
 
 - **Workspace management** -- Group projects into workspaces and switch between them
 - **Terminal multiplexer** -- Run multiple Claude Code sessions and shell terminals side by side with split view
-- **Session history** -- Browse past Claude Code sessions per project
-- **Skills manager** -- Install, uninstall, and browse Claude Code slash-command skills
-- **Daily planner** -- Built-in task management to track your work
-- **GitHub dashboard** -- View issues and PRs for your projects via the GitHub CLI
+- **Workspace Agent** -- Launch a Claude session with full workspace context as a system prompt
+- **Session history** -- Browse and resume past Claude Code sessions per project
+- **Skills manager** -- Install, browse, and run Claude Code slash-command skills
+- **Daily planner** -- Built-in task management with the ability to send tasks directly to Claude
+- **GitHub dashboard** -- View issues and PRs (authored, assigned, review-requested) via the GitHub CLI
+- **Keyboard shortcuts** -- Cmd+T (new session), Cmd+W (close tab), Cmd+1-9 (switch tabs), Cmd+F (search terminal)
+- **Session persistence** -- Tabs restore automatically across app restarts
+- **Drag and drop** -- Reorder tabs by dragging; drop files from Finder into terminals to paste paths
 - **Dark theme** -- Purpose-built dark UI designed for long coding sessions
+- **Cross-platform** -- macOS (Apple Silicon & Intel), Linux, and Windows
 
 ## Installation
 
