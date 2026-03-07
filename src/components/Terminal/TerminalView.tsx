@@ -4,6 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { SearchAddon } from "@xterm/addon-search";
 import type { TerminalTab } from "../../types/terminal";
+import { invoke } from "@tauri-apps/api/core";
 import {
   spawnTerminal,
   writeToTerminal,
@@ -115,51 +116,64 @@ export function TerminalView({
     }
 
     // Build initial command and system prompt
-    let initialCmd: string | undefined;
-    let sysPrompt: string | undefined;
+    // For workspace agents restored from session storage, re-fetch context
+    const doSpawn = async () => {
+      let initialCmd: string | undefined;
+      let sysPrompt: string | undefined;
 
-    if (tab.isWorkspaceAgent && tab.workspaceContext) {
-      sysPrompt = tab.workspaceContext;
-    } else if (tab.initialPrompt) {
-      initialCmd = tab.initialPrompt;
-    }
-
-    spawnTerminal(
-      tab.projectPath,
-      tab.isClaudeSession,
-      tab.sessionId || null,
-      (event) => {
-        if (event.type === "output") {
-          xterm.write(new Uint8Array(event.data));
-        } else if (event.type === "exit") {
-          xterm.write("\r\n\x1b[90m[Process exited]\x1b[0m\r\n");
-          onTabDiedRef.current?.();
-        }
-      },
-      initialCmd,
-      sysPrompt,
-    )
-      .then((termId) => {
-        terminalIdRef.current = termId;
-        onTerminalSpawnedRef.current(tab.id, termId);
-        onRegisterElementRef.current?.(termId, containerRef.current);
-
-        xterm.onData((data) => {
-          writeToTerminal(termId, data).catch(console.error);
-        });
-
-        const ro = new ResizeObserver(() => {
-          if (container) {
-            fitAddon.fit();
-            resizeTerminal(termId, xterm.rows, xterm.cols).catch(console.error);
+      if (tab.isWorkspaceAgent) {
+        if (tab.workspaceContext) {
+          sysPrompt = tab.workspaceContext;
+        } else {
+          try {
+            sysPrompt = await invoke<string>("get_workspace_context", {
+              workspacePath: tab.projectPath,
+            });
+          } catch (err) {
+            console.error("Failed to fetch workspace context:", err);
           }
-        });
-        ro.observe(container);
-        roRef.current = ro;
-      })
-      .catch((err) => {
-        xterm.write(`\x1b[31mFailed to start: ${err}\x1b[0m\r\n`);
+        }
+      } else if (tab.initialPrompt) {
+        initialCmd = tab.initialPrompt;
+      }
+
+      const termId = await spawnTerminal(
+        tab.projectPath,
+        tab.isClaudeSession,
+        tab.sessionId || null,
+        (event) => {
+          if (event.type === "output") {
+            xterm.write(new Uint8Array(event.data));
+          } else if (event.type === "exit") {
+            xterm.write("\r\n\x1b[90m[Process exited]\x1b[0m\r\n");
+            onTabDiedRef.current?.();
+          }
+        },
+        initialCmd,
+        sysPrompt,
+      );
+
+      terminalIdRef.current = termId;
+      onTerminalSpawnedRef.current(tab.id, termId);
+      onRegisterElementRef.current?.(termId, containerRef.current);
+
+      xterm.onData((data) => {
+        writeToTerminal(termId, data).catch(console.error);
       });
+
+      const ro = new ResizeObserver(() => {
+        if (container) {
+          fitAddon.fit();
+          resizeTerminal(termId, xterm.rows, xterm.cols).catch(console.error);
+        }
+      });
+      ro.observe(container);
+      roRef.current = ro;
+    };
+
+    doSpawn().catch((err) => {
+      xterm.write(`\x1b[31mFailed to start: ${err}\x1b[0m\r\n`);
+    });
 
     // NO cleanup here — xterm must survive visibility changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

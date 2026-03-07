@@ -82,10 +82,16 @@ function App() {
     return null;
   }, []);
 
+  // Safety timeout ref to clear isDragging if no drop/leave fires (e.g. macOS screenshot thumbnails)
+  const dragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const unlisten = getCurrentWindow().onDragDropEvent((event) => {
       if (event.payload.type === "enter" || event.payload.type === "over") {
         setIsDragging(true);
+        // Reset safety timeout on each drag event
+        if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = setTimeout(() => setIsDragging(false), 5000);
         // Update hovered terminal using drag position (mouse events don't fire during OS drag)
         if (event.payload.position) {
           const hit = findTerminalAtPoint(event.payload.position.x, event.payload.position.y);
@@ -93,8 +99,10 @@ function App() {
         }
       } else if (event.payload.type === "leave") {
         setIsDragging(false);
+        if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
       } else if (event.payload.type === "drop") {
         setIsDragging(false);
+        if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
         const paths = event.payload.paths;
         // Use position from drop event for final hit-test
         if (event.payload.position) {
@@ -112,6 +120,7 @@ function App() {
     });
     return () => {
       unlisten.then((fn) => fn());
+      if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
     };
   }, [findTerminalAtPoint]);
 
