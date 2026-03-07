@@ -1,6 +1,7 @@
 use portable_pty::{Child, MasterPty};
 use std::collections::HashMap;
 use std::io::Write;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 pub struct TerminalInstance {
@@ -11,6 +12,8 @@ pub struct TerminalInstance {
     pub project_path: String,
     #[allow(dead_code)]
     pub is_claude_session: bool,
+    #[allow(dead_code)]
+    pub has_output: Arc<AtomicBool>,
 }
 
 pub struct AppState {

@@ -1,3 +1,4 @@
+import { ask } from "@tauri-apps/plugin-dialog";
 import type { Project } from "../../types/project";
 import type { Workspace } from "../../services/database-service";
 import { ProjectList } from "./ProjectList";
@@ -75,7 +76,13 @@ export function Sidebar({
                 <span className="workspace-count">{wsProjects.length}</span>
                 <button
                   className="workspace-remove"
-                  onClick={() => onRemoveWorkspace(ws.id)}
+                  onClick={async () => {
+                    const confirmed = await ask(
+                      `Remove "${ws.name}" and all its projects from Forge?`,
+                      { title: "Remove Workspace", kind: "warning" }
+                    );
+                    if (confirmed) onRemoveWorkspace(ws.id);
+                  }}
                   title="Remove workspace"
                 >
                   x
