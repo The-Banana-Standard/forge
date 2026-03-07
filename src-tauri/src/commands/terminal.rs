@@ -2,6 +2,7 @@ use crate::state::AppState;
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde::Serialize;
 use std::io::{Read, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{ipc::Channel, State};
 
@@ -171,6 +172,7 @@ pub fn spawn_terminal(
         .map_err(|e| format!("Failed to take writer: {}", e))?;
 
     // Store terminal instance
+    let has_output = Arc::new(AtomicBool::new(false));
     {
         let mut terminals = state.terminals.lock().map_err(|e| format!("Lock poisoned: {}", e))?;
         terminals.insert(
@@ -181,6 +183,7 @@ pub fn spawn_terminal(
                 child,
                 project_path: project_path.clone(),
                 is_claude_session,
+                has_output: Arc::clone(&has_output),
             },
         );
     }
@@ -188,12 +191,14 @@ pub fn spawn_terminal(
     // Spawn reader thread
     let tid = terminal_id.clone();
     let terminals_ref = Arc::clone(&state.terminals);
+    let has_output_reader = Arc::clone(&has_output);
     std::thread::spawn(move || {
         let mut buf = [0u8; 4096];
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => break,
                 Ok(n) => {
+                    has_output_reader.store(true, Ordering::Release);
                     let _ = on_event.send(TerminalEvent::Output {
                         data: buf[..n].to_vec(),
                     });
@@ -217,12 +222,39 @@ pub fn spawn_terminal(
         let _ = on_event.send(TerminalEvent::Exit { code: exit_code });
     });
 
-    // Send initial command after a delay if provided
+    // Send initial command once the shell is ready (detected via PTY output)
     if let Some(cmd) = initial_command {
         let tid2 = terminal_id.clone();
         let terminals_ref2 = Arc::clone(&state.terminals);
+        let is_claude = is_claude_session;
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(2000));
+            // Wait until the PTY has produced output (shell prompt drawn), up to 10s
+            let start = std::time::Instant::now();
+            let timeout = std::time::Duration::from_secs(10);
+            let poll_interval = std::time::Duration::from_millis(50);
+
+            while !has_output.load(Ordering::Acquire) {
+                if start.elapsed() >= timeout {
+                    break;
+                }
+                // Check if terminal was closed
+                if let Ok(terminals) = terminals_ref2.lock() {
+                    if terminals.get(&tid2).is_none() {
+                        return;
+                    }
+                }
+                std::thread::sleep(poll_interval);
+            }
+
+            // Claude Code needs more time after first output — its banner prints
+            // before the input prompt is ready. Shell prompts are ready immediately.
+            let settle = if is_claude {
+                std::time::Duration::from_millis(2000)
+            } else {
+                std::time::Duration::from_millis(50)
+            };
+            std::thread::sleep(settle);
+
             let Ok(mut terminals) = terminals_ref2.lock() else { return };
             if let Some(term) = terminals.get_mut(&tid2) {
                 let _ = term.writer.write_all(cmd.as_bytes());

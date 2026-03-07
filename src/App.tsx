@@ -8,6 +8,7 @@ import { WorkspaceOverview } from "./components/WorkspaceOverview/WorkspaceOverv
 import { ProjectSummaryPanel } from "./components/ProjectSummary/ProjectSummaryPanel";
 import { TerminalTabBar } from "./components/Terminal/TerminalTabBar";
 import { TerminalView } from "./components/Terminal/TerminalView";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useProjects } from "./hooks/useProjects";
 import { useTerminal, HOME_TAB_ID } from "./hooks/useTerminal";
 import type { Project } from "./types/project";
@@ -317,14 +318,16 @@ function App() {
           {/* Home tab content — kept mounted to preserve state (e.g. planner input) */}
           {hasWorkspace && (
             <div style={{ display: isHomeActive ? "contents" : "none" }}>
-              <WorkspaceOverview
-                projects={projects}
-                onSelectProject={handleOpenProject}
-                onLaunchAgent={handleLaunchWorkspaceAgent}
-                onSendTaskToClaude={handleSendTaskToClaude}
-                onRunSkill={handleRunSkill}
-                onBrowseAllSkills={handleBrowseAllSkills}
-              />
+              <ErrorBoundary>
+                <WorkspaceOverview
+                  projects={projects}
+                  onSelectProject={handleOpenProject}
+                  onLaunchAgent={handleLaunchWorkspaceAgent}
+                  onSendTaskToClaude={handleSendTaskToClaude}
+                  onRunSkill={handleRunSkill}
+                  onBrowseAllSkills={handleBrowseAllSkills}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
@@ -338,13 +341,15 @@ function App() {
 
           {/* Project overview tab content */}
           {isOverviewActive && activeTab && (
-            <ProjectSummaryPanel
-              projectName={activeTab.projectName || activeTab.label}
-              projectPath={activeTab.projectPath}
-              onResumeSession={handleResumeSession}
-              onNewSession={handleNewSessionFromOverview}
-              onNewShell={handleNewShellFromOverview}
-            />
+            <ErrorBoundary>
+              <ProjectSummaryPanel
+                projectName={activeTab.projectName || activeTab.label}
+                projectPath={activeTab.projectPath}
+                onResumeSession={handleResumeSession}
+                onNewSession={handleNewSessionFromOverview}
+                onNewShell={handleNewShellFromOverview}
+              />
+            </ErrorBoundary>
           )}
 
           {/* Terminal panels — always in DOM so xterm can init with real dimensions */}
