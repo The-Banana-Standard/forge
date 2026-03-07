@@ -226,6 +226,7 @@ pub fn spawn_terminal(
     if let Some(cmd) = initial_command {
         let tid2 = terminal_id.clone();
         let terminals_ref2 = Arc::clone(&state.terminals);
+        let is_claude = is_claude_session;
         std::thread::spawn(move || {
             // Wait until the PTY has produced output (shell prompt drawn), up to 10s
             let start = std::time::Instant::now();
@@ -245,8 +246,14 @@ pub fn spawn_terminal(
                 std::thread::sleep(poll_interval);
             }
 
-            // Small extra delay after first output so the prompt is fully rendered
-            std::thread::sleep(std::time::Duration::from_millis(50));
+            // Claude Code needs more time after first output — its banner prints
+            // before the input prompt is ready. Shell prompts are ready immediately.
+            let settle = if is_claude {
+                std::time::Duration::from_millis(2000)
+            } else {
+                std::time::Duration::from_millis(50)
+            };
+            std::thread::sleep(settle);
 
             let Ok(mut terminals) = terminals_ref2.lock() else { return };
             if let Some(term) = terminals.get_mut(&tid2) {
