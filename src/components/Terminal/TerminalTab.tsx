@@ -45,6 +45,7 @@ export function TerminalTab({
         if (!canDrag || e.button !== 0) return;
         const target = e.target as HTMLElement;
         if (target.closest(".terminal-tab-close")) return;
+        e.preventDefault(); // Prevent text selection during drag
         onDragStart!(tabId!);
       }}
       onMouseEnter={() => {
