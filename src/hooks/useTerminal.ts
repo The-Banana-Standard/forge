@@ -1,15 +1,69 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { TerminalTab } from "../types/terminal";
 import { closeTerminal } from "../services/terminal-service";
 
 export const HOME_TAB_ID = "home";
 
+const SESSION_STORAGE_KEY = "forge-tab-sessions";
+
+interface SavedSession {
+  id: string;
+  label: string;
+  isClaudeSession: boolean;
+  isProjectOverview?: boolean;
+  projectPath: string;
+  projectName?: string;
+  isWorkspaceAgent?: boolean;
+}
+
+function loadSavedSessions(): { tabs: TerminalTab[]; activeTabId: string } {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return { tabs: [], activeTabId: HOME_TAB_ID };
+    const saved = JSON.parse(raw) as { tabs: SavedSession[]; activeTabId: string };
+    const tabs: TerminalTab[] = saved.tabs.map((s) => ({
+      id: s.id,
+      terminalId: null,
+      label: s.label,
+      isClaudeSession: s.isClaudeSession,
+      isProjectOverview: s.isProjectOverview,
+      projectPath: s.projectPath,
+      projectName: s.projectName,
+      isWorkspaceAgent: s.isWorkspaceAgent,
+    }));
+    return { tabs, activeTabId: saved.activeTabId || HOME_TAB_ID };
+  } catch {
+    return { tabs: [], activeTabId: HOME_TAB_ID };
+  }
+}
+
+function saveSessions(tabs: TerminalTab[], activeTabId: string | null) {
+  const toSave: SavedSession[] = tabs.map((t) => ({
+    id: t.id,
+    label: t.label,
+    isClaudeSession: t.isClaudeSession,
+    isProjectOverview: t.isProjectOverview,
+    projectPath: t.projectPath,
+    projectName: t.projectName,
+    isWorkspaceAgent: t.isWorkspaceAgent,
+  }));
+  localStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify({ tabs: toSave, activeTabId: activeTabId || HOME_TAB_ID })
+  );
+}
+
 export function useTerminal() {
-  const [tabs, setTabs] = useState<TerminalTab[]>([]);
+  const [tabs, setTabs] = useState<TerminalTab[]>(() => loadSavedSessions().tabs);
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
-  const [activeTabId, setActiveTabId] = useState<string | null>(HOME_TAB_ID);
+  const [activeTabId, setActiveTabId] = useState<string | null>(() => loadSavedSessions().activeTabId);
   const [splitMode, setSplitMode] = useState(false);
+
+  // Persist tab state on change
+  useEffect(() => {
+    saveSessions(tabs, activeTabId);
+  }, [tabs, activeTabId]);
 
   const addTab = useCallback(
     (projectPath: string, isClaudeSession: boolean, sessionId?: string, initialPrompt?: string) => {
@@ -114,8 +168,10 @@ export function useTerminal() {
     async (tabId: string) => {
       if (tabId === HOME_TAB_ID) return;
 
-      // Read terminal ID from ref (always current) before updating state
-      const tab = tabsRef.current.find((t) => t.id === tabId);
+      // Read terminal ID and index from ref (always current) before updating state
+      const currentTabs = tabsRef.current;
+      const tabIdx = currentTabs.findIndex((t) => t.id === tabId);
+      const tab = tabIdx !== -1 ? currentTabs[tabIdx] : null;
       const terminalIdToClose = tab?.terminalId ?? null;
 
       setTabs((prev) => prev.filter((t) => t.id !== tabId));
@@ -124,9 +180,14 @@ export function useTerminal() {
         closeTerminal(terminalIdToClose).catch(() => {});
       }
 
+      // If the closed tab was active, switch to an adjacent tab instead of always going home
       setActiveTabId((currentActive) => {
-        if (currentActive === tabId) return HOME_TAB_ID;
-        return currentActive;
+        if (currentActive !== tabId) return currentActive;
+        const remaining = currentTabs.filter((t) => t.id !== tabId);
+        if (remaining.length === 0) return HOME_TAB_ID;
+        // Pick the tab that was next to the closed one (prefer right neighbor, then left)
+        const nextIdx = Math.min(tabIdx, remaining.length - 1);
+        return remaining[nextIdx].id;
       });
     },
     []
@@ -144,6 +205,18 @@ export function useTerminal() {
     );
   }, []);
 
+  const reorderTabs = useCallback((fromId: string, toId: string) => {
+    setTabs((prev) => {
+      const fromIdx = prev.findIndex((t) => t.id === fromId);
+      const toIdx = prev.findIndex((t) => t.id === toId);
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+  }, []);
+
   return {
     tabs,
     activeTabId,
@@ -157,5 +230,6 @@ export function useTerminal() {
     removeTab,
     setTerminalId,
     markTabDead,
+    reorderTabs,
   };
 }

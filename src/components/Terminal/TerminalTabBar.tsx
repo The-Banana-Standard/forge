@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import type { TerminalTab as TerminalTabType } from "../../types/terminal";
 import { TerminalTab } from "./TerminalTab";
 import { HOME_TAB_ID } from "../../hooks/useTerminal";
@@ -11,6 +12,7 @@ interface TerminalTabBarProps {
   onToggleSplit: () => void;
   onNewTerminal: () => void;
   onNewClaudeSession: () => void;
+  onReorderTabs?: (fromId: string, toId: string) => void;
 }
 
 export function TerminalTabBar({
@@ -22,8 +24,39 @@ export function TerminalTabBar({
   onToggleSplit,
   onNewTerminal,
   onNewClaudeSession,
+  onReorderTabs,
 }: TerminalTabBarProps) {
   const terminalCount = tabs.filter((t) => !t.isProjectOverview).length;
+
+  // Pointer-based tab reorder (avoids conflict with Tauri's native drag-drop)
+  const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((tabId: string) => {
+    setDraggingTabId(tabId);
+  }, []);
+
+  const handleDragEnter = useCallback((tabId: string) => {
+    if (draggingTabId && tabId !== draggingTabId) {
+      setDragOverTabId(tabId);
+    }
+  }, [draggingTabId]);
+
+  // Listen for global mouseup to complete the reorder
+  useEffect(() => {
+    if (!draggingTabId) return;
+
+    const handleMouseUp = () => {
+      if (draggingTabId && dragOverTabId && onReorderTabs) {
+        onReorderTabs(draggingTabId, dragOverTabId);
+      }
+      setDraggingTabId(null);
+      setDragOverTabId(null);
+    };
+
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => window.removeEventListener("mouseup", handleMouseUp);
+  }, [draggingTabId, dragOverTabId, onReorderTabs]);
 
   return (
     <div className="terminal-tab-bar">
@@ -41,6 +74,7 @@ export function TerminalTabBar({
         {tabs.map((tab) => (
           <TerminalTab
             key={tab.id}
+            tabId={tab.id}
             label={tab.label}
             projectName={tab.projectName}
             isActive={tab.id === activeTabId}
@@ -48,8 +82,11 @@ export function TerminalTabBar({
             isWorkspaceAgent={tab.isWorkspaceAgent}
             isProjectOverview={tab.isProjectOverview}
             isDead={tab.dead}
+            isDragOver={dragOverTabId === tab.id}
             onClick={() => onSelectTab(tab.id)}
             onClose={() => onCloseTab(tab.id)}
+            onDragStart={onReorderTabs ? handleDragStart : undefined}
+            onDragEnter={onReorderTabs ? handleDragEnter : undefined}
           />
         ))}
       </div>

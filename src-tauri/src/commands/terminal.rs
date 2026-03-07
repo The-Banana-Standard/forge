@@ -281,7 +281,8 @@ pub fn resize_terminal(
 #[tauri::command]
 pub fn close_terminal(state: State<'_, AppState>, terminal_id: String) -> Result<(), String> {
     let mut terminals = state.terminals.lock().map_err(|e| format!("Lock poisoned: {}", e))?;
-    // Just removing it will drop the master PTY which signals the child
-    terminals.remove(&terminal_id);
+    if let Some(mut term) = terminals.remove(&terminal_id) {
+        let _ = term.child.kill();
+    }
     Ok(())
 }

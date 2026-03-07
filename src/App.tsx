@@ -36,6 +36,7 @@ function App() {
     removeTab,
     setTerminalId,
     markTabDead,
+    reorderTabs,
   } = useTerminal();
 
   // Claude CLI availability — default true to avoid false-blocking before check completes
@@ -45,14 +46,19 @@ function App() {
     checkClaudeCli().then((status) => setClaudeCliAvailable(status.available));
   }, []);
 
-  // Drag-and-drop: write file paths into the active terminal
+  // Drag-and-drop: write file paths into the hovered terminal (or active if not in split)
   const [isDragging, setIsDragging] = useState(false);
   const activeTerminalIdRef = useRef<string | null>(null);
+  const hoveredTerminalIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const activeTab = tabs.find((t) => t.id === activeTabId);
     activeTerminalIdRef.current = activeTab?.terminalId ?? null;
   }, [tabs, activeTabId]);
+
+  const handleTerminalHover = useCallback((terminalId: string | null) => {
+    hoveredTerminalIdRef.current = terminalId;
+  }, []);
 
   useEffect(() => {
     const unlisten = getCurrentWindow().onDragDropEvent((event) => {
@@ -63,7 +69,8 @@ function App() {
       } else if (event.payload.type === "drop") {
         setIsDragging(false);
         const paths = event.payload.paths;
-        const termId = activeTerminalIdRef.current;
+        // Prefer the hovered terminal (for split mode), fall back to active
+        const termId = hoveredTerminalIdRef.current || activeTerminalIdRef.current;
         if (termId && paths.length > 0) {
           const pathStr = paths
             .map((p) => (p.includes(" ") ? `"${p}"` : p))
@@ -76,6 +83,89 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta) return;
+
+      // Cmd+T — New Claude session
+      if (e.key === "t" && !e.shiftKey) {
+        e.preventDefault();
+        const path = (() => {
+          if (activeTabId === HOME_TAB_ID) {
+            if (workspaces.length > 0) return workspaces[0].path;
+            if (projects.length > 0) return projects[0].path;
+            return null;
+          }
+          const tab = tabs.find((t) => t.id === activeTabId);
+          return tab?.projectPath ?? (workspaces.length > 0 ? workspaces[0].path : projects.length > 0 ? projects[0].path : null);
+        })();
+        if (path) addTab(path, true);
+        return;
+      }
+
+      // Cmd+Shift+T — New shell
+      if (e.key === "T" || (e.key === "t" && e.shiftKey)) {
+        e.preventDefault();
+        const path = (() => {
+          if (activeTabId === HOME_TAB_ID) {
+            if (workspaces.length > 0) return workspaces[0].path;
+            if (projects.length > 0) return projects[0].path;
+            return null;
+          }
+          const tab = tabs.find((t) => t.id === activeTabId);
+          return tab?.projectPath ?? (workspaces.length > 0 ? workspaces[0].path : projects.length > 0 ? projects[0].path : null);
+        })();
+        if (path) addTab(path, false);
+        return;
+      }
+
+      // Cmd+W — Close current tab
+      if (e.key === "w" && !e.shiftKey) {
+        e.preventDefault();
+        if (activeTabId && activeTabId !== HOME_TAB_ID) {
+          removeTab(activeTabId);
+        }
+        return;
+      }
+
+      // Cmd+Shift+[ — Previous tab
+      if (e.key === "[" && e.shiftKey) {
+        e.preventDefault();
+        const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
+        const idx = allIds.indexOf(activeTabId ?? HOME_TAB_ID);
+        const prev = idx > 0 ? allIds[idx - 1] : allIds[allIds.length - 1];
+        setActiveTabId(prev);
+        return;
+      }
+
+      // Cmd+Shift+] — Next tab
+      if (e.key === "]" && e.shiftKey) {
+        e.preventDefault();
+        const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
+        const idx = allIds.indexOf(activeTabId ?? HOME_TAB_ID);
+        const next = idx < allIds.length - 1 ? allIds[idx + 1] : allIds[0];
+        setActiveTabId(next);
+        return;
+      }
+
+      // Cmd+1-9 — Switch to tab by index (1=Home, 2+=tabs)
+      if (e.key >= "1" && e.key <= "9") {
+        e.preventDefault();
+        const num = parseInt(e.key, 10);
+        const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
+        if (num <= allIds.length) {
+          setActiveTabId(allIds[num - 1]);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [tabs, activeTabId, workspaces, projects, addTab, removeTab, setActiveTabId]);
 
   // Controls whether the right sidebar skills panel opens to Browse tab
   const [openSkillsBrowse, setOpenSkillsBrowse] = useState(false);
@@ -221,18 +311,21 @@ function App() {
             onToggleSplit={toggleSplit}
             onNewTerminal={handleNewTerminal}
             onNewClaudeSession={handleNewClaude}
+            onReorderTabs={reorderTabs}
           />
 
-          {/* Home tab content */}
-          {isHomeActive && hasWorkspace && (
-            <WorkspaceOverview
-              projects={projects}
-              onSelectProject={handleOpenProject}
-              onLaunchAgent={handleLaunchWorkspaceAgent}
-              onSendTaskToClaude={handleSendTaskToClaude}
-              onRunSkill={handleRunSkill}
-              onBrowseAllSkills={handleBrowseAllSkills}
-            />
+          {/* Home tab content — kept mounted to preserve state (e.g. planner input) */}
+          {hasWorkspace && (
+            <div style={{ display: isHomeActive ? "contents" : "none" }}>
+              <WorkspaceOverview
+                projects={projects}
+                onSelectProject={handleOpenProject}
+                onLaunchAgent={handleLaunchWorkspaceAgent}
+                onSendTaskToClaude={handleSendTaskToClaude}
+                onRunSkill={handleRunSkill}
+                onBrowseAllSkills={handleBrowseAllSkills}
+              />
+            </div>
           )}
 
           {isHomeActive && !hasWorkspace && (
@@ -296,6 +389,7 @@ function App() {
                       claudeCliAvailable={claudeCliAvailable ?? true}
                       onTabDied={() => markTabDead(tab.id)}
                       isDragging={isDragging && isTabVisible}
+                      onTerminalHover={handleTerminalHover}
                     />
                   </div>
                 ) : (
@@ -308,6 +402,7 @@ function App() {
                     claudeCliAvailable={claudeCliAvailable ?? true}
                     onTabDied={() => markTabDead(tab.id)}
                     isDragging={isDragging && isTabVisible}
+                    onTerminalHover={handleTerminalHover}
                   />
                 );
               })}

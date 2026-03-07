@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import type { PlannerTask } from "../../services/database-service";
 import type { Project } from "../../types/project";
+import { CustomSelect } from "../CustomSelect";
 
 interface DailyPlannerItemProps {
   task: PlannerTask;
@@ -23,6 +25,14 @@ export function DailyPlannerItem({
     ? projects.find((p) => p.id === task.project_id)
     : null;
 
+  const projectOptions = useMemo(
+    () => [
+      { value: "", label: "No project" },
+      ...projects.map((p) => ({ value: p.id, label: p.name })),
+    ],
+    [projects]
+  );
+
   return (
     <div className={`planner-item ${isCompleted ? "completed" : ""}`}>
       <label className="planner-checkbox-wrap">
@@ -37,17 +47,15 @@ export function DailyPlannerItem({
         {task.text}
       </span>
       {projects.length > 0 && (
-        <select
+        <CustomSelect
           className="planner-item-project-select"
           value={task.project_id || ""}
-          onChange={(e) => onSetProject(task.id, e.target.value || null)}
+          options={projectOptions}
+          onChange={(val) => onSetProject(task.id, val || null)}
+          placeholder="No project"
           title="Assign to project"
-        >
-          <option value="">No project</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          compact
+        />
       )}
       <div className="planner-item-actions">
         <button
