@@ -18,6 +18,7 @@ interface TerminalViewProps {
   claudeCliAvailable?: boolean;
   onTabDied?: () => void;
   isDragging?: boolean;
+  onTerminalHover?: (terminalId: string | null) => void;
 }
 
 export function TerminalView({
@@ -28,6 +29,7 @@ export function TerminalView({
   claudeCliAvailable,
   onTabDied,
   isDragging,
+  onTerminalHover,
 }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
@@ -231,6 +233,8 @@ export function TerminalView({
         display: isVisible ? "block" : "none",
         position: "relative",
       }}
+      onMouseEnter={() => onTerminalHover?.(terminalIdRef.current)}
+      onMouseLeave={() => onTerminalHover?.(null)}
     >
       {searchOpen && (
         <div className="terminal-search-bar">

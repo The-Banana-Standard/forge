@@ -896,6 +896,11 @@ html, body, #root {
   color: var(--danger);
 }
 
+.terminal-tab.drag-over {
+  border-color: var(--accent-orange);
+  background: var(--accent-orange-glow);
+}
+
 .terminal-tab.dead {
   opacity: 0.5;
 }

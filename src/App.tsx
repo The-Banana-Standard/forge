@@ -46,14 +46,19 @@ function App() {
     checkClaudeCli().then((status) => setClaudeCliAvailable(status.available));
   }, []);
 
-  // Drag-and-drop: write file paths into the active terminal
+  // Drag-and-drop: write file paths into the hovered terminal (or active if not in split)
   const [isDragging, setIsDragging] = useState(false);
   const activeTerminalIdRef = useRef<string | null>(null);
+  const hoveredTerminalIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const activeTab = tabs.find((t) => t.id === activeTabId);
     activeTerminalIdRef.current = activeTab?.terminalId ?? null;
   }, [tabs, activeTabId]);
+
+  const handleTerminalHover = useCallback((terminalId: string | null) => {
+    hoveredTerminalIdRef.current = terminalId;
+  }, []);
 
   useEffect(() => {
     const unlisten = getCurrentWindow().onDragDropEvent((event) => {
@@ -64,7 +69,8 @@ function App() {
       } else if (event.payload.type === "drop") {
         setIsDragging(false);
         const paths = event.payload.paths;
-        const termId = activeTerminalIdRef.current;
+        // Prefer the hovered terminal (for split mode), fall back to active
+        const termId = hoveredTerminalIdRef.current || activeTerminalIdRef.current;
         if (termId && paths.length > 0) {
           const pathStr = paths
             .map((p) => (p.includes(" ") ? `"${p}"` : p))
@@ -383,6 +389,7 @@ function App() {
                       claudeCliAvailable={claudeCliAvailable ?? true}
                       onTabDied={() => markTabDead(tab.id)}
                       isDragging={isDragging && isTabVisible}
+                      onTerminalHover={handleTerminalHover}
                     />
                   </div>
                 ) : (
@@ -395,6 +402,7 @@ function App() {
                     claudeCliAvailable={claudeCliAvailable ?? true}
                     onTabDied={() => markTabDead(tab.id)}
                     isDragging={isDragging && isTabVisible}
+                    onTerminalHover={handleTerminalHover}
                   />
                 );
               })}

@@ -1,5 +1,3 @@
-import { useRef } from "react";
-
 interface TerminalTabProps {
   tabId?: string;
   label: string;
@@ -10,9 +8,11 @@ interface TerminalTabProps {
   isHomePage?: boolean;
   isProjectOverview?: boolean;
   isDead?: boolean;
+  isDragOver?: boolean;
   onClick: () => void;
   onClose: () => void;
-  onReorder?: (fromId: string, toId: string) => void;
+  onDragStart?: (tabId: string) => void;
+  onDragEnter?: (tabId: string) => void;
 }
 
 export function TerminalTab({
@@ -25,39 +25,31 @@ export function TerminalTab({
   isHomePage,
   isProjectOverview,
   isDead,
+  isDragOver,
   onClick,
   onClose,
-  onReorder,
+  onDragStart,
+  onDragEnter,
 }: TerminalTabProps) {
   const typeClass = isHomePage ? "home" : isProjectOverview ? "overview" : isClaudeSession ? "claude" : "shell";
   const icon = isHomePage ? "\u2302" : isProjectOverview ? "\u2261" : isWorkspaceAgent ? "*" : isClaudeSession ? ">" : "$";
-  const dragRef = useRef(false);
 
-  const draggable = !isHomePage && !!tabId && !!onReorder;
+  const canDrag = !isHomePage && !!tabId && !!onDragStart;
 
   return (
     <div
-      className={`terminal-tab ${isActive ? "active" : ""} ${typeClass} ${isWorkspaceAgent ? "agent" : ""} ${isDead ? "dead" : ""}`}
+      className={`terminal-tab ${isActive ? "active" : ""} ${typeClass} ${isWorkspaceAgent ? "agent" : ""} ${isDead ? "dead" : ""} ${isDragOver ? "drag-over" : ""}`}
       onClick={onClick}
-      draggable={draggable}
-      onDragStart={(e) => {
-        if (!draggable) return;
-        dragRef.current = true;
-        e.dataTransfer.setData("text/tab-id", tabId!);
-        e.dataTransfer.effectAllowed = "move";
+      onMouseDown={(e) => {
+        // Only start drag on left click, not on close button
+        if (!canDrag || e.button !== 0) return;
+        const target = e.target as HTMLElement;
+        if (target.closest(".terminal-tab-close")) return;
+        onDragStart!(tabId!);
       }}
-      onDragEnd={() => { dragRef.current = false; }}
-      onDragOver={(e) => {
-        if (!draggable) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-      }}
-      onDrop={(e) => {
-        if (!draggable) return;
-        e.preventDefault();
-        const fromId = e.dataTransfer.getData("text/tab-id");
-        if (fromId && fromId !== tabId) {
-          onReorder!(fromId, tabId!);
+      onMouseEnter={() => {
+        if (canDrag && onDragEnter) {
+          onDragEnter(tabId!);
         }
       }}
     >
