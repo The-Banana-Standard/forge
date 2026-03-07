@@ -11,7 +11,7 @@ async function getDb() {
 }
 
 async function initDb() {
-  const db = await Database.load("sqlite:forge.db");
+  const db = await Database.load("sqlite:canopy.db");
   await db.execute(`
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,

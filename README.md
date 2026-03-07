@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.svg" alt="Forge" width="128" height="128" />
+  <img src="logo.svg" alt="Canopy" width="128" height="128" />
 </p>
 
-<h1 align="center">Forge</h1>
+<h1 align="center">Canopy</h1>
 
 <p align="center">
   A desktop workspace manager and terminal multiplexer for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> CLI sessions.
@@ -17,17 +17,17 @@
 
 ---
 
-Forge is a Tauri v2 desktop app that lets you manage project folders, launch Claude Code sessions and shell terminals against them, and keep everything organized in workspaces. Everything runs locally -- no external APIs, no cloud dependencies.
+Canopy is a Tauri v2 desktop app that lets you manage project folders, launch Claude Code sessions and shell terminals against them, and keep everything organized in workspaces. Everything runs locally -- no external APIs, no cloud dependencies.
 
 ## Quick Install
 
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/The-Banana-Standard/forge/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/The-Banana-Standard/canopy/main/install.sh | sh
 ```
 
-**Windows:** Download the latest `.exe` or `.msi` from the [Releases](https://github.com/The-Banana-Standard/forge/releases) page.
+**Windows:** Download the latest `.exe` or `.msi` from the [Releases](https://github.com/The-Banana-Standard/canopy/releases) page.
 
 > **Prerequisite:** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) must be installed (`npm install -g @anthropic-ai/claude-code`).
 
@@ -50,19 +50,19 @@ curl -fsSL https://raw.githubusercontent.com/The-Banana-Standard/forge/main/inst
 
 ### Pre-built releases
 
-Download the latest release for your platform from the [Releases](https://github.com/The-Banana-Standard/forge/releases) page.
+Download the latest release for your platform from the [Releases](https://github.com/The-Banana-Standard/canopy/releases) page.
 
 | Platform | File |
 |----------|------|
-| macOS (Apple Silicon) | `Forge_x.x.x_aarch64.dmg` |
-| macOS (Intel) | `Forge_x.x.x_x64.dmg` |
-| Windows | `Forge_x.x.x_x64-setup.exe` |
-| Linux (Debian/Ubuntu) | `Forge_x.x.x_amd64.deb` |
-| Linux (other) | `Forge_x.x.x_amd64.AppImage` |
+| macOS (Apple Silicon) | `Canopy_x.x.x_aarch64.dmg` |
+| macOS (Intel) | `Canopy_x.x.x_x64.dmg` |
+| Windows | `Canopy_x.x.x_x64-setup.exe` |
+| Linux (Debian/Ubuntu) | `Canopy_x.x.x_amd64.deb` |
+| Linux (other) | `Canopy_x.x.x_amd64.AppImage` |
 
-> **macOS users:** The app is code-signed and notarized. If you installed an older version and macOS shows "Forge is damaged and can't be opened", run:
+> **macOS users:** The app is code-signed and notarized. If you installed an older version and macOS shows "Canopy is damaged and can't be opened", run:
 > ```bash
-> xattr -cr /Applications/Forge.app
+> xattr -cr /Applications/Canopy.app
 > ```
 
 ### Build from source
@@ -73,8 +73,8 @@ Download the latest release for your platform from the [Releases](https://github
 - Platform-specific Tauri dependencies -- see the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```bash
-git clone https://github.com/The-Banana-Standard/forge.git
-cd forge
+git clone https://github.com/The-Banana-Standard/canopy.git
+cd canopy
 npm install
 npm run tauri build
 ```
@@ -101,7 +101,7 @@ The Vite dev server runs on port 1420 with HMR enabled.
 
 ## Architecture
 
-Forge is built with:
+Canopy is built with:
 
 - **Backend:** Rust (Tauri v2, portable-pty, tokio)
 - **Frontend:** React 19, TypeScript (strict), xterm.js v6

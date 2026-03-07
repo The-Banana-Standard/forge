@@ -66,8 +66,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Forge ${{ github.ref_name }}"
-          releaseBody: "See the [changelog](https://github.com/The-Banana-Standard/forge/blob/main/CHANGELOG.md) for details."
+          releaseName: "Canopy ${{ github.ref_name }}"
+          releaseBody: "See the [changelog](https://github.com/The-Banana-Standard/canopy/blob/main/CHANGELOG.md) for details."
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}

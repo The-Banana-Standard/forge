@@ -19,6 +19,7 @@ interface TerminalViewProps {
   onTabDied?: () => void;
   isDragging?: boolean;
   onTerminalHover?: (terminalId: string | null) => void;
+  onRegisterElement?: (terminalId: string, el: HTMLElement | null) => void;
 }
 
 export function TerminalView({
@@ -30,6 +31,7 @@ export function TerminalView({
   onTabDied,
   isDragging,
   onTerminalHover,
+  onRegisterElement,
 }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
@@ -47,6 +49,8 @@ export function TerminalView({
   onTerminalSpawnedRef.current = onTerminalSpawned;
   const onTabDiedRef = useRef(onTabDied);
   onTabDiedRef.current = onTabDied;
+  const onRegisterElementRef = useRef(onRegisterElement);
+  onRegisterElementRef.current = onRegisterElement;
 
   // Init terminal on first visibility — no cleanup (xterm persists)
   useEffect(() => {
@@ -138,6 +142,7 @@ export function TerminalView({
       .then((termId) => {
         terminalIdRef.current = termId;
         onTerminalSpawnedRef.current(tab.id, termId);
+        onRegisterElementRef.current?.(termId, containerRef.current);
 
         xterm.onData((data) => {
           writeToTerminal(termId, data).catch(console.error);
@@ -165,6 +170,9 @@ export function TerminalView({
     return () => {
       roRef.current?.disconnect();
       xtermRef.current?.dispose();
+      if (terminalIdRef.current) {
+        onRegisterElementRef.current?.(terminalIdRef.current, null);
+      }
     };
   }, []);
 

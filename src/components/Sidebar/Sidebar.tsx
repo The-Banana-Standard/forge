@@ -78,7 +78,7 @@ export function Sidebar({
                   className="workspace-remove"
                   onClick={async () => {
                     const confirmed = await ask(
-                      `Remove "${ws.name}" and all its projects from Forge?`,
+                      `Remove "${ws.name}" and all its projects from Canopy?`,
                       { title: "Remove Workspace", kind: "warning" }
                     );
                     if (confirmed) onRemoveWorkspace(ws.id);

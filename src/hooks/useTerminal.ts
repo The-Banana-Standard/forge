@@ -4,7 +4,7 @@ import { closeTerminal } from "../services/terminal-service";
 
 export const HOME_TAB_ID = "home";
 
-const SESSION_STORAGE_KEY = "forge-tab-sessions";
+const SESSION_STORAGE_KEY = "canopy-tab-sessions";
 
 interface SavedSession {
   id: string;

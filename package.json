@@ -1,15 +1,15 @@
 {
-  "name": "forge",
+  "name": "canopy",
   "version": "0.1.5",
   "description": "Desktop workspace manager and terminal multiplexer for Claude Code CLI sessions",
   "author": "Anthony Mazzola",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/The-Banana-Standard/forge"
+    "url": "https://github.com/The-Banana-Standard/canopy"
   },
   "keywords": [
-    "forge",
+    "canopy",
     "tauri",
     "terminal",
     "workspace",

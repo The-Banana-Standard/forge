@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Forge will be documented in this file.
+All notable changes to Canopy will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -43,12 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drag-and-drop file support — drag images or files from Finder into terminal sessions to paste their paths
 
 ### Fixed
-- GitHub CLI (`gh`) not found when Forge is launched from macOS Finder/Dock
+- GitHub CLI (`gh`) not found when Canopy is launched from macOS Finder/Dock
 
 ## [0.1.2] - 2026-03-05
 
 ### Fixed
-- Claude CLI not found when Forge is launched from macOS Finder/Dock due to minimal PATH
+- Claude CLI not found when Canopy is launched from macOS Finder/Dock due to minimal PATH
 
 ## [0.1.1] - 2026-03-05
 
@@ -68,10 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark theme UI
 - Multi-platform support (macOS, Linux, Windows)
 
-[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.5...HEAD
-[0.1.5]: https://github.com/The-Banana-Standard/forge/compare/v0.1.4...v0.1.5
-[0.1.4]: https://github.com/The-Banana-Standard/forge/compare/v0.1.3...v0.1.4
-[0.1.3]: https://github.com/The-Banana-Standard/forge/compare/v0.1.2...v0.1.3
-[0.1.2]: https://github.com/The-Banana-Standard/forge/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/The-Banana-Standard/forge/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/The-Banana-Standard/forge/releases/tag/v0.1.0
+[Unreleased]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/The-Banana-Standard/canopy/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/The-Banana-Standard/canopy/releases/tag/v0.1.0
