@@ -828,6 +828,7 @@ html, body, #root {
   transition: all 0.15s;
   border: 1px solid var(--border-color);
   border-bottom: none;
+  user-select: none;
 }
 
 .terminal-tab:hover {
