@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-03-07
+
+### Added
+- React ErrorBoundary to prevent full-app white-screen crashes
+- Confirmation dialog before workspace deletion
+- Install script for macOS and Linux (`curl -fsSL ... | sh`)
+
+### Changed
+- Shell readiness detection replaces hardcoded 2s delay for initial commands
+- Workspace Agent no longer pre-fills a prompt — opens ready for user input
+- Updated README with quick install command, refreshed feature list
+
+### Fixed
+- Initial commands now reliably reach Claude Code sessions (event-driven timing)
+
 ## [0.1.4] - 2026-03-07
 
 ### Added
@@ -53,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark theme UI
 - Multi-platform support (macOS, Linux, Windows)
 
-[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/The-Banana-Standard/forge/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/The-Banana-Standard/forge/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/The-Banana-Standard/forge/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/The-Banana-Standard/forge/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/The-Banana-Standard/forge/compare/v0.1.1...v0.1.2
