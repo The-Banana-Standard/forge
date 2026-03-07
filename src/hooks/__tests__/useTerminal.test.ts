@@ -13,6 +13,7 @@ let uuidCounter = 0;
 
 beforeEach(() => {
   uuidCounter = 0;
+  localStorage.clear();
   vi.spyOn(crypto, "randomUUID").mockImplementation(() => `uuid-${++uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`);
   vi.mocked(closeTerminal).mockClear();
 });

@@ -11,6 +11,7 @@ interface TerminalTabBarProps {
   onToggleSplit: () => void;
   onNewTerminal: () => void;
   onNewClaudeSession: () => void;
+  onReorderTabs?: (fromId: string, toId: string) => void;
 }
 
 export function TerminalTabBar({
@@ -22,6 +23,7 @@ export function TerminalTabBar({
   onToggleSplit,
   onNewTerminal,
   onNewClaudeSession,
+  onReorderTabs,
 }: TerminalTabBarProps) {
   const terminalCount = tabs.filter((t) => !t.isProjectOverview).length;
 
@@ -41,6 +43,7 @@ export function TerminalTabBar({
         {tabs.map((tab) => (
           <TerminalTab
             key={tab.id}
+            tabId={tab.id}
             label={tab.label}
             projectName={tab.projectName}
             isActive={tab.id === activeTabId}
@@ -50,6 +53,7 @@ export function TerminalTabBar({
             isDead={tab.dead}
             onClick={() => onSelectTab(tab.id)}
             onClose={() => onCloseTab(tab.id)}
+            onReorder={onReorderTabs}
           />
         ))}
       </div>

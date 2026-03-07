@@ -137,9 +137,8 @@ describe("DailyPlannerItem", () => {
         onSetProject={vi.fn()}
       />
     );
-    const select = container.querySelector("select");
-    expect(select).toBeTruthy();
-    expect(screen.getByText("My App")).toBeTruthy();
+    const customSelect = container.querySelector(".custom-select");
+    expect(customSelect).toBeTruthy();
   });
 
   it("hides project select when no projects", () => {
@@ -153,12 +152,12 @@ describe("DailyPlannerItem", () => {
         onSetProject={vi.fn()}
       />
     );
-    expect(container.querySelector("select")).toBeNull();
+    expect(container.querySelector(".custom-select")).toBeNull();
   });
 
   it("calls onSetProject when project selection changes", () => {
     const onSetProject = vi.fn();
-    const { container } = render(
+    render(
       <DailyPlannerItem
         task={baseTask}
         projects={projects}
@@ -168,8 +167,10 @@ describe("DailyPlannerItem", () => {
         onSetProject={onSetProject}
       />
     );
-    const select = container.querySelector("select")!;
-    fireEvent.change(select, { target: { value: "proj-1" } });
+    // Open the dropdown
+    fireEvent.click(screen.getByText("No project"));
+    // Select "My App"
+    fireEvent.click(screen.getByText("My App"));
     expect(onSetProject).toHaveBeenCalledWith("task-1", "proj-1");
   });
 

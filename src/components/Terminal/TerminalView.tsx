@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { SearchAddon } from "@xterm/addon-search";
 import type { TerminalTab } from "../../types/terminal";
 import {
   spawnTerminal,
@@ -31,9 +32,13 @@ export function TerminalView({
   const containerRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const searchAddonRef = useRef<SearchAddon | null>(null);
   const spawnedRef = useRef(false);
   const terminalIdRef = useRef<string | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Keep latest callbacks in refs to avoid stale closures
   const onTerminalSpawnedRef = useRef(onTerminalSpawned);
@@ -80,8 +85,11 @@ export function TerminalView({
     });
 
     const fitAddon = new FitAddon();
+    const searchAddon = new SearchAddon();
     xterm.loadAddon(fitAddon);
     xterm.loadAddon(new WebLinksAddon());
+    xterm.loadAddon(searchAddon);
+    searchAddonRef.current = searchAddon;
 
     xterm.open(container);
     xtermRef.current = xterm;
@@ -159,6 +167,44 @@ export function TerminalView({
     };
   }, []);
 
+  // Cmd+F to open search
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isVisible]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    if (value) {
+      searchAddonRef.current?.findNext(value, { incremental: true });
+    } else {
+      searchAddonRef.current?.clearDecorations();
+    }
+  }, []);
+
+  const handleSearchNext = useCallback(() => {
+    if (searchQuery) searchAddonRef.current?.findNext(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchPrev = useCallback(() => {
+    if (searchQuery) searchAddonRef.current?.findPrevious(searchQuery);
+  }, [searchQuery]);
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    searchAddonRef.current?.clearDecorations();
+    xtermRef.current?.focus();
+  }, []);
+
   // Re-fit when becoming visible again or when split mode changes
   useEffect(() => {
     if (isVisible && fitAddonRef.current && xtermRef.current && terminalIdRef.current) {
@@ -186,6 +232,35 @@ export function TerminalView({
         position: "relative",
       }}
     >
+      {searchOpen && (
+        <div className="terminal-search-bar">
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="terminal-search-input"
+            placeholder="Find..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.shiftKey ? handleSearchPrev() : handleSearchNext();
+              }
+              if (e.key === "Escape") {
+                closeSearch();
+              }
+            }}
+          />
+          <button className="terminal-search-btn" onClick={handleSearchPrev} title="Previous (Shift+Enter)">
+            &#9650;
+          </button>
+          <button className="terminal-search-btn" onClick={handleSearchNext} title="Next (Enter)">
+            &#9660;
+          </button>
+          <button className="terminal-search-btn close" onClick={closeSearch} title="Close (Esc)">
+            x
+          </button>
+        </div>
+      )}
       {isDragging && (
         <div className="terminal-drop-overlay">
           <div className="terminal-drop-overlay-content">

@@ -215,6 +215,41 @@ pub async fn get_github_items(project_paths: Vec<String>) -> GitHubData {
                 }
             }
 
+            // Fetch PRs assigned to the current user
+            if let Ok(output) = Command::new("gh")
+                .args([
+                    "pr", "list",
+                    "--assignee", "@me",
+                    "--json", "number,title,author,url,createdAt,isDraft,reviewDecision",
+                    "--repo", &repo_clone,
+                ])
+                .env("PATH", &task_path)
+                .output()
+            {
+                if output.status.success() {
+                    if let Ok(raw_prs) = serde_json::from_slice::<Vec<GhPrJson>>(&output.stdout) {
+                        let existing_numbers: HashSet<u64> = prs.iter().map(|p| p.number).collect();
+                        for pr in raw_prs {
+                            if !existing_numbers.contains(&pr.number) {
+                                prs.push(GitHubPr {
+                                    number: pr.number,
+                                    title: pr.title,
+                                    author: pr.author
+                                        .and_then(|a| a.login)
+                                        .unwrap_or_default(),
+                                    repo_name: repo_short.clone(),
+                                    project_path: path_clone.clone(),
+                                    url: pr.url.unwrap_or_default(),
+                                    created_at: pr.created_at.unwrap_or_default(),
+                                    draft: pr.is_draft.unwrap_or(false),
+                                    review_decision: pr.review_decision,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
             // Fetch assigned issues
             if let Ok(output) = Command::new("gh")
                 .args([

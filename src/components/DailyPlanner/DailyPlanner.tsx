@@ -1,7 +1,8 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, useMemo } from "react";
 import type { Project } from "../../types/project";
 import { usePlannerTasks } from "../../hooks/usePlannerTasks";
 import { DailyPlannerItem } from "./DailyPlannerItem";
+import { CustomSelect } from "../CustomSelect";
 
 interface DailyPlannerProps {
   projects: Project[];
@@ -22,6 +23,14 @@ export function DailyPlanner({ projects, onSendToClaude }: DailyPlannerProps) {
       setInputValue("");
     }
   };
+
+  const projectOptions = useMemo(
+    () => [
+      { value: "", label: "No project" },
+      ...projects.map((p) => ({ value: p.id, label: p.name })),
+    ],
+    [projects]
+  );
 
   if (loading) return null;
 
@@ -45,17 +54,14 @@ export function DailyPlanner({ projects, onSendToClaude }: DailyPlannerProps) {
           onKeyDown={handleKeyDown}
         />
         {projects.length > 0 && (
-          <select
+          <CustomSelect
             className="planner-project-select"
             value={selectedProjectId}
-            onChange={(e) => setSelectedProjectId(e.target.value)}
+            options={projectOptions}
+            onChange={setSelectedProjectId}
+            placeholder="No project"
             title="Assign to project"
-          >
-            <option value="">No project</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          />
         )}
       </div>
       {tasks.length > 0 && (
