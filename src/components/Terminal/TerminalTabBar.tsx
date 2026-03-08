@@ -82,6 +82,8 @@ export function TerminalTabBar({
             isWorkspaceAgent={tab.isWorkspaceAgent}
             isProjectOverview={tab.isProjectOverview}
             isDead={tab.dead}
+            completedWhileHidden={tab.completedWhileHidden}
+            needsAttention={tab.needsAttention}
             isDragOver={dragOverTabId === tab.id}
             onClick={() => onSelectTab(tab.id)}
             onClose={() => onCloseTab(tab.id)}

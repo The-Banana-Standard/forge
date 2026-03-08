@@ -9,6 +9,8 @@ interface TerminalTabProps {
   isProjectOverview?: boolean;
   isDead?: boolean;
   isDragOver?: boolean;
+  completedWhileHidden?: boolean;
+  needsAttention?: boolean;
   onClick: () => void;
   onClose: () => void;
   onDragStart?: (tabId: string) => void;
@@ -26,6 +28,8 @@ export function TerminalTab({
   isProjectOverview,
   isDead,
   isDragOver,
+  completedWhileHidden,
+  needsAttention,
   onClick,
   onClose,
   onDragStart,
@@ -54,7 +58,11 @@ export function TerminalTab({
         }
       }}
     >
-      <span className="terminal-tab-icon">{icon}</span>
+      <span className="terminal-tab-icon">
+        {icon}
+        {needsAttention && <span className="tab-attention-dot" />}
+        {completedWhileHidden && !needsAttention && <span className="tab-completion-dot" />}
+      </span>
       <span className="terminal-tab-label">{label}</span>
       {!isHomePage && (
         <button

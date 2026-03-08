@@ -153,6 +153,49 @@ pub fn spawn_terminal(
     cmd.env("PATH", &full_path);
     cmd.env("TERM", "xterm-256color");
 
+    // Inject provider env vars for Claude sessions
+    if is_claude_session {
+        if let Ok(cache) = state.provider_settings.lock() {
+            if let Some(ref settings) = *cache {
+                match settings.provider {
+                    crate::state::Provider::Bedrock => {
+                        cmd.env("CLAUDE_CODE_USE_BEDROCK", "1");
+                        if let Some(ref v) = settings.aws_region {
+                            cmd.env("AWS_REGION", v);
+                        }
+                        if let Some(ref v) = settings.aws_profile {
+                            cmd.env("AWS_PROFILE", v);
+                        }
+                        if let Some(ref v) = settings.aws_access_key_id {
+                            cmd.env("AWS_ACCESS_KEY_ID", v);
+                        }
+                        if let Some(ref v) = settings.aws_secret_access_key {
+                            cmd.env("AWS_SECRET_ACCESS_KEY", v);
+                        }
+                        if let Some(ref v) = settings.aws_session_token {
+                            cmd.env("AWS_SESSION_TOKEN", v);
+                        }
+                    }
+                    crate::state::Provider::Vertex => {
+                        cmd.env("CLAUDE_CODE_USE_VERTEX", "1");
+                        if let Some(ref v) = settings.gcp_project_id {
+                            cmd.env("CLOUD_ML_PROJECT_ID", v);
+                        }
+                        if let Some(ref v) = settings.gcp_region {
+                            cmd.env("CLOUD_ML_REGION", v);
+                        }
+                    }
+                    crate::state::Provider::Direct => {}
+                }
+                if let Some(ref m) = settings.model_override {
+                    if !m.is_empty() {
+                        cmd.env("ANTHROPIC_MODEL", m);
+                    }
+                }
+            }
+        }
+    }
+
     let child = pair
         .slave
         .spawn_command(cmd)

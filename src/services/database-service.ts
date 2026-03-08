@@ -50,6 +50,19 @@ async function initDb() {
     } catch (_) {
       // Non-critical — silently ignore cleanup failures
     }
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS provider_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        provider TEXT NOT NULL DEFAULT 'direct',
+        aws_region TEXT,
+        aws_profile TEXT,
+        gcp_project_id TEXT,
+        gcp_region TEXT,
+        model_override TEXT
+      )
+    `);
+
   return db;
 }
 
@@ -176,4 +189,36 @@ export async function clearCompletedPlannerTasks(): Promise<void> {
 export async function updatePlannerTaskProject(id: string, projectId: string | null): Promise<void> {
   const d = await getDb();
   await d.execute("UPDATE planner_tasks SET project_id = $1 WHERE id = $2", [projectId, id]);
+}
+
+// ── Provider Settings ──
+
+export interface ProviderSettingsRow {
+  provider: string;
+  aws_region: string | null;
+  aws_profile: string | null;
+  gcp_project_id: string | null;
+  gcp_region: string | null;
+  model_override: string | null;
+}
+
+export async function getProviderSettings(): Promise<ProviderSettingsRow | null> {
+  const d = await getDb();
+  const rows = await d.select<ProviderSettingsRow[]>(
+    "SELECT provider, aws_region, aws_profile, gcp_project_id, gcp_region, model_override FROM provider_settings WHERE id = 1"
+  );
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function saveProviderSettings(settings: ProviderSettingsRow): Promise<void> {
+  const d = await getDb();
+  await d.execute(
+    `INSERT INTO provider_settings (id, provider, aws_region, aws_profile, gcp_project_id, gcp_region, model_override)
+     VALUES (1, $1, $2, $3, $4, $5, $6)
+     ON CONFLICT(id) DO UPDATE SET
+       provider = $1, aws_region = $2, aws_profile = $3,
+       gcp_project_id = $4, gcp_region = $5, model_override = $6`,
+    [settings.provider, settings.aws_region, settings.aws_profile,
+     settings.gcp_project_id, settings.gcp_region, settings.model_override]
+  );
 }

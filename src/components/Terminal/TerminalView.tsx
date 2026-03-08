@@ -17,7 +17,8 @@ interface TerminalViewProps {
   splitMode: boolean;
   onTerminalSpawned: (tabId: string, terminalId: string) => void;
   claudeCliAvailable?: boolean;
-  onTabDied?: () => void;
+  onTabDied?: (exitCode: number | null) => void;
+  onBell?: () => void;
   isDragging?: boolean;
   onTerminalHover?: (terminalId: string | null) => void;
   onRegisterElement?: (terminalId: string, el: HTMLElement | null) => void;
@@ -30,6 +31,7 @@ export function TerminalView({
   onTerminalSpawned,
   claudeCliAvailable,
   onTabDied,
+  onBell,
   isDragging,
   onTerminalHover,
   onRegisterElement,
@@ -50,6 +52,8 @@ export function TerminalView({
   onTerminalSpawnedRef.current = onTerminalSpawned;
   const onTabDiedRef = useRef(onTabDied);
   onTabDiedRef.current = onTabDied;
+  const onBellRef = useRef(onBell);
+  onBellRef.current = onBell;
   const onRegisterElementRef = useRef(onRegisterElement);
   onRegisterElementRef.current = onRegisterElement;
 
@@ -111,9 +115,41 @@ export function TerminalView({
       xterm.write("Install it with:\r\n");
       xterm.write("  \x1b[33mnpm install -g @anthropic-ai/claude-code\x1b[0m\r\n\r\n");
       xterm.write("Then close this tab and try again.\r\n");
-      onTabDiedRef.current?.();
+      onTabDiedRef.current?.(null);
       return;
     }
+
+    // Rolling text buffer to detect Claude permission/question prompts
+    // Claude Code doesn't emit terminal bell for these, so we scan output text
+    let outputBuffer = "";
+    let lastAttentionTime = 0;
+    const ATTENTION_PATTERNS = [
+      "Do you want to proceed?",
+      "Esc to cancel",
+      "Allow once",
+      "Allow always",
+    ];
+    const ATTENTION_COOLDOWN = 5000; // Don't re-fire within 5s
+
+    const checkForAttentionNeeded = (newText: string) => {
+      // Only check Claude sessions
+      if (!tab.isClaudeSession) return;
+
+      // Append new text, keep last 500 chars (enough to catch prompts)
+      outputBuffer = (outputBuffer + newText).slice(-500);
+
+      const now = Date.now();
+      if (now - lastAttentionTime < ATTENTION_COOLDOWN) return;
+
+      for (const pattern of ATTENTION_PATTERNS) {
+        if (outputBuffer.includes(pattern)) {
+          lastAttentionTime = now;
+          outputBuffer = ""; // Reset to avoid repeat triggers
+          onBellRef.current?.();
+          return;
+        }
+      }
+    };
 
     // Build initial command and system prompt
     // For workspace agents restored from session storage, re-fetch context
@@ -143,10 +179,14 @@ export function TerminalView({
         tab.sessionId || null,
         (event) => {
           if (event.type === "output") {
-            xterm.write(new Uint8Array(event.data));
+            const bytes = new Uint8Array(event.data);
+            xterm.write(bytes);
+            // Strip ANSI escape sequences and check for attention patterns
+            const text = new TextDecoder().decode(bytes).replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+            checkForAttentionNeeded(text);
           } else if (event.type === "exit") {
             xterm.write("\r\n\x1b[90m[Process exited]\x1b[0m\r\n");
-            onTabDiedRef.current?.();
+            onTabDiedRef.current?.(event.code);
           }
         },
         initialCmd,
@@ -159,6 +199,12 @@ export function TerminalView({
 
       xterm.onData((data) => {
         writeToTerminal(termId, data).catch(console.error);
+        // User responded — clear the buffer so we don't re-trigger on the same prompt
+        outputBuffer = "";
+      });
+
+      xterm.onBell(() => {
+        onBellRef.current?.();
       });
 
       const ro = new ResizeObserver(() => {

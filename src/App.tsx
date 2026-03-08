@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow, UserAttentionType } from "@tauri-apps/api/window";
 import { checkClaudeCli, writeToTerminal } from "./services/terminal-service";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { Sidebar } from "./components/Sidebar/Sidebar";
@@ -11,6 +11,10 @@ import { TerminalView } from "./components/Terminal/TerminalView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useProjects } from "./hooks/useProjects";
 import { useTerminal, HOME_TAB_ID } from "./hooks/useTerminal";
+import { useToast } from "./hooks/useToast";
+import { useNotificationSettings } from "./hooks/useNotificationSettings";
+import { ToastContainer } from "./components/Toast/ToastContainer";
+import { sendSessionNotification, sendAttentionNotification, ensureNotificationPermission } from "./services/notification-service";
 import type { Project } from "./types/project";
 
 function App() {
@@ -37,8 +41,15 @@ function App() {
     removeTab,
     setTerminalId,
     markTabDead,
+    clearTabNotice,
+    markTabAttention,
     reorderTabs,
   } = useTerminal();
+
+  const { toasts, addToast, removeToast } = useToast();
+  const { settings: notifSettings } = useNotificationSettings();
+  const notifSettingsRef = useRef(notifSettings);
+  notifSettingsRef.current = notifSettings;
 
   // Claude CLI availability — default true to avoid false-blocking before check completes
   const [claudeCliAvailable, setClaudeCliAvailable] = useState<boolean | null>(true);
@@ -47,9 +58,14 @@ function App() {
     checkClaudeCli().then((status) => setClaudeCliAvailable(status.available));
   }, []);
 
+  useEffect(() => {
+    ensureNotificationPermission().catch(console.error);
+  }, []);
+
   // Drag-and-drop: write file paths into the hovered terminal (or active if not in split)
   const [isDragging, setIsDragging] = useState(false);
   const activeTerminalIdRef = useRef<string | null>(null);
+  const activeTabIdRef = useRef<string | null>(activeTabId);
   const hoveredTerminalIdRef = useRef<string | null>(null);
   // Registry of terminal container DOM elements for hit-testing during OS drag
   const terminalElementsRef = useRef<Map<string, HTMLElement>>(new Map());
@@ -57,6 +73,7 @@ function App() {
   useEffect(() => {
     const activeTab = tabs.find((t) => t.id === activeTabId);
     activeTerminalIdRef.current = activeTab?.terminalId ?? null;
+    activeTabIdRef.current = activeTabId;
   }, [tabs, activeTabId]);
 
   const handleTerminalHover = useCallback((terminalId: string | null) => {
@@ -124,6 +141,65 @@ function App() {
     };
   }, [findTerminalAtPoint]);
 
+  const handleTabDied = useCallback(
+    (tabId: string, tabLabel: string, isClaudeSession: boolean, exitCode: number | null) => {
+      const isActive = activeTabIdRef.current === tabId;
+      markTabDead(tabId, isActive);
+
+      if (notifSettingsRef.current.systemNotifications && isClaudeSession && !document.hasFocus()) {
+        sendSessionNotification(tabLabel, exitCode).catch(console.error);
+      }
+    },
+    [markTabDead, addToast]
+  );
+
+  // Handle terminal bell (Claude asking a question / permission prompt)
+  const handleBell = useCallback(
+    (tabId: string, tabLabel: string, isClaudeSession: boolean) => {
+      const isActive = activeTabIdRef.current === tabId;
+      if (isActive && document.hasFocus()) return; // User is already looking at it
+
+      // Mark tab as needing attention
+      markTabAttention(tabId);
+
+      // Bounce dock icon
+      getCurrentWindow().requestUserAttention(UserAttentionType.Informational).catch(console.error);
+
+      // Update dock badge with count of tabs needing attention
+      const attentionCount = tabs.filter((t) => t.needsAttention).length + 1;
+      getCurrentWindow().setBadgeCount(attentionCount).catch(console.error);
+
+      if (notifSettingsRef.current.toastNotifications) {
+        addToast(
+          "Needs your input",
+          `"${tabLabel}" is waiting for a response`,
+          "success"
+        );
+      }
+
+      if (notifSettingsRef.current.systemNotifications && isClaudeSession && !document.hasFocus()) {
+        sendAttentionNotification(tabLabel).catch(console.error);
+      }
+    },
+    [markTabAttention, addToast, tabs]
+  );
+
+  const selectTab = useCallback(
+    (tabId: string) => {
+      setActiveTabId(tabId);
+      clearTabNotice(tabId);
+      // Update dock badge: count remaining attention tabs (excluding the one being selected)
+      const remaining = tabs.filter((t) => t.needsAttention && t.id !== tabId).length;
+      if (remaining === 0) {
+        getCurrentWindow().setBadgeCount(undefined).catch(console.error);
+        getCurrentWindow().requestUserAttention(null).catch(console.error);
+      } else {
+        getCurrentWindow().setBadgeCount(remaining).catch(console.error);
+      }
+    },
+    [setActiveTabId, clearTabNotice, tabs]
+  );
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -177,7 +253,7 @@ function App() {
         const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
         const idx = allIds.indexOf(activeTabId ?? HOME_TAB_ID);
         const prev = idx > 0 ? allIds[idx - 1] : allIds[allIds.length - 1];
-        setActiveTabId(prev);
+        selectTab(prev);
         return;
       }
 
@@ -187,7 +263,7 @@ function App() {
         const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
         const idx = allIds.indexOf(activeTabId ?? HOME_TAB_ID);
         const next = idx < allIds.length - 1 ? allIds[idx + 1] : allIds[0];
-        setActiveTabId(next);
+        selectTab(next);
         return;
       }
 
@@ -197,7 +273,7 @@ function App() {
         const num = parseInt(e.key, 10);
         const allIds = [HOME_TAB_ID, ...tabs.map((t) => t.id)];
         if (num <= allIds.length) {
-          setActiveTabId(allIds[num - 1]);
+          selectTab(allIds[num - 1]);
         }
         return;
       }
@@ -205,7 +281,7 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [tabs, activeTabId, workspaces, projects, addTab, removeTab, setActiveTabId]);
+  }, [tabs, activeTabId, workspaces, projects, addTab, removeTab, selectTab]);
 
   // Controls whether the right sidebar skills panel opens to Browse tab
   const [openSkillsBrowse, setOpenSkillsBrowse] = useState(false);
@@ -333,13 +409,14 @@ function App() {
   const isSpecialTab = isHomeActive || isOverviewActive;
 
   return (
-    <AppLayout
-      projectPath={activeTab ? activeTab.projectPath : null}
-      onRunSkill={handleRunSkill}
-      onGoHome={goHome}
-      openSkillsBrowse={openSkillsBrowse}
-      onSkillsBrowseConsumed={() => setOpenSkillsBrowse(false)}
-      sidebar={
+    <>
+      <AppLayout
+        projectPath={activeTab ? activeTab.projectPath : null}
+        onRunSkill={handleRunSkill}
+        onGoHome={goHome}
+        openSkillsBrowse={openSkillsBrowse}
+        onSkillsBrowseConsumed={() => setOpenSkillsBrowse(false)}
+        sidebar={
         <Sidebar
           projects={projects}
           workspaces={workspaces}
@@ -351,15 +428,15 @@ function App() {
           onRemoveWorkspace={removeWorkspace}
           onGoHome={goHome}
         />
-      }
-      main={
+        }
+        main={
         <div className="main-content">
           {/* Tab bar */}
           <TerminalTabBar
             tabs={tabs}
             activeTabId={activeTabId}
             splitMode={splitMode}
-            onSelectTab={setActiveTabId}
+            onSelectTab={selectTab}
             onCloseTab={removeTab}
             onToggleSplit={toggleSplit}
             onNewTerminal={handleNewTerminal}
@@ -445,7 +522,8 @@ function App() {
                       splitMode={splitMode}
                       onTerminalSpawned={setTerminalId}
                       claudeCliAvailable={claudeCliAvailable ?? true}
-                      onTabDied={() => markTabDead(tab.id)}
+                      onTabDied={(exitCode) => handleTabDied(tab.id, tab.label, tab.isClaudeSession, exitCode ?? null)}
+                      onBell={() => handleBell(tab.id, tab.label, tab.isClaudeSession)}
                       isDragging={isDragging && isTabVisible}
                       onTerminalHover={handleTerminalHover}
                       onRegisterElement={registerTerminalElement}
@@ -459,7 +537,8 @@ function App() {
                     splitMode={splitMode}
                     onTerminalSpawned={setTerminalId}
                     claudeCliAvailable={claudeCliAvailable ?? true}
-                    onTabDied={() => markTabDead(tab.id)}
+                    onTabDied={(exitCode) => handleTabDied(tab.id, tab.label, tab.isClaudeSession, exitCode ?? null)}
+                    onBell={() => handleBell(tab.id, tab.label, tab.isClaudeSession)}
                     isDragging={isDragging && isTabVisible}
                     onTerminalHover={handleTerminalHover}
                   />
@@ -468,8 +547,10 @@ function App() {
             </div>
           )}
         </div>
-      }
-    />
+        }
+      />
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
+    </>
   );
 }
 

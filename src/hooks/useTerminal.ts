@@ -200,9 +200,29 @@ export function useTerminal() {
     );
   }, []);
 
-  const markTabDead = useCallback((tabId: string) => {
+  const markTabDead = useCallback((tabId: string, isActiveTab: boolean) => {
     setTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, dead: true } : t))
+      prev.map((t) =>
+        t.id === tabId
+          ? { ...t, dead: true, completedWhileHidden: !isActiveTab }
+          : t
+      )
+    );
+  }, []);
+
+  const clearTabNotice = useCallback((tabId: string) => {
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.id === tabId ? { ...t, completedWhileHidden: false, needsAttention: false } : t
+      )
+    );
+  }, []);
+
+  const markTabAttention = useCallback((tabId: string) => {
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.id === tabId ? { ...t, needsAttention: true } : t
+      )
     );
   }, []);
 
@@ -231,6 +251,8 @@ export function useTerminal() {
     removeTab,
     setTerminalId,
     markTabDead,
+    clearTabNotice,
+    markTabAttention,
     reorderTabs,
   };
 }

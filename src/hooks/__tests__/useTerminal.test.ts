@@ -150,10 +150,32 @@ describe("useTerminal", () => {
     });
 
     act(() => {
-      result.current.markTabDead(tabId);
+      result.current.markTabDead(tabId, false);
     });
 
     expect(result.current.tabs[0].dead).toBe(true);
+    expect(result.current.tabs[0].completedWhileHidden).toBe(true);
+  });
+
+  it("clearTabNotice resets completedWhileHidden flag", () => {
+    const { result } = renderHook(() => useTerminal());
+
+    let tabId: string = "";
+    act(() => {
+      tabId = result.current.addTab("/home/user/proj", true);
+    });
+
+    act(() => {
+      result.current.markTabDead(tabId, false);
+    });
+
+    expect(result.current.tabs[0].completedWhileHidden).toBe(true);
+
+    act(() => {
+      result.current.clearTabNotice(tabId);
+    });
+
+    expect(result.current.tabs[0].completedWhileHidden).toBe(false);
   });
 
   it("setTerminalId links terminal to tab", () => {
