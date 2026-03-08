@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Project } from "../../types/project";
 import type { ProjectInfo, ClaudeUsageStats } from "../../types/project-info";
+import type { ClaudeSession } from "../../types/claude-session";
 import { formatTokens } from "../../types/project-info";
+import { getSessionsForProject } from "../../services/claude-data-service";
+import { SessionCard } from "../ProjectSummary/SessionCard";
 import { DailyPlanner } from "../DailyPlanner/DailyPlanner";
 import { GitHubDashboard } from "../GitHubDashboard/GitHubDashboard";
 import { SkillsStoreSection } from "./SkillsStoreSection";
@@ -11,6 +14,7 @@ interface WorkspaceOverviewProps {
   projects: Project[];
   onSelectProject: (project: Project) => void;
   onLaunchAgent: () => void;
+  onResumeAgentSession: (sessionId: string) => void;
   onSendTaskToClaude: (text: string, projectPath?: string) => void;
   onRunSkill: (skillName: string) => void;
   onBrowseAllSkills: () => void;
@@ -20,13 +24,24 @@ export function WorkspaceOverview({
   projects,
   onSelectProject,
   onLaunchAgent,
+  onResumeAgentSession,
   onSendTaskToClaude,
   onRunSkill,
   onBrowseAllSkills,
 }: WorkspaceOverviewProps) {
   const [projectInfos, setProjectInfos] = useState<Map<string, ProjectInfo>>(new Map());
   const [usage, setUsage] = useState<ClaudeUsageStats | null>(null);
+  const [agentSessions, setAgentSessions] = useState<ClaudeSession[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Derive workspace path from first project's parent directory
+  const workspacePath = useMemo(() => {
+    if (projects.length === 0) return null;
+    const first = projects[0].path;
+    const parts = first.split(/[/\\]/);
+    parts.pop();
+    return parts.join("/");
+  }, [projects]);
 
   const loadDashboard = useCallback(() => {
     setLoading(true);
@@ -40,16 +55,18 @@ export function WorkspaceOverview({
         )
       ),
       invoke<ClaudeUsageStats>("get_claude_usage_stats").catch(() => null),
-    ]).then(([results, usageStats]) => {
+      workspacePath ? getSessionsForProject(workspacePath).catch(() => []) : Promise.resolve([]),
+    ]).then(([results, usageStats, wsSessions]) => {
       const map = new Map<string, ProjectInfo>();
       for (const r of results) {
         if (r) map.set(r[0], r[1]);
       }
       setProjectInfos(map);
       setUsage(usageStats);
+      setAgentSessions(wsSessions);
       setLoading(false);
     });
-  }, [projects]);
+  }, [projects, workspacePath]);
 
   useEffect(() => {
     loadDashboard();
@@ -115,6 +132,22 @@ export function WorkspaceOverview({
           </div>
         </button>
       </div>
+
+      {/* Recent agent sessions */}
+      {agentSessions.length > 0 && (
+        <div className="dash-agent-sessions">
+          <h3 className="dash-agent-sessions-title">Recent Agent Sessions</h3>
+          <div className="dash-agent-sessions-list">
+            {agentSessions.slice(0, 3).map((s, i) => (
+              <SessionCard
+                key={s.sessionId || i}
+                session={s}
+                onResume={onResumeAgentSession}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="dash-loading">Scanning projects...</div>

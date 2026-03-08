@@ -302,6 +302,19 @@ function App() {
     }
   }, [workspaces, addWorkspaceAgentTab]);
 
+  const handleResumeAgentSession = useCallback(async (sessionId: string) => {
+    const wsPath = workspaces.length > 0 ? workspaces[0].path : null;
+    if (!wsPath) return;
+    try {
+      const context = await invoke<string>("get_workspace_context", {
+        workspacePath: wsPath,
+      });
+      addWorkspaceAgentTab(wsPath, context, sessionId);
+    } catch (err) {
+      console.error("Failed to resume workspace agent:", err);
+    }
+  }, [workspaces, addWorkspaceAgentTab]);
+
   const handleBrowseAllSkills = useCallback(() => {
     setOpenSkillsBrowse(true);
   }, []);
@@ -362,6 +375,7 @@ function App() {
                   projects={projects}
                   onSelectProject={handleOpenProject}
                   onLaunchAgent={handleLaunchWorkspaceAgent}
+                  onResumeAgentSession={handleResumeAgentSession}
                   onSendTaskToClaude={handleSendTaskToClaude}
                   onRunSkill={handleRunSkill}
                   onBrowseAllSkills={handleBrowseAllSkills}
