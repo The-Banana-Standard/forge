@@ -17,18 +17,13 @@ pub struct TerminalInstance {
     pub has_output: Arc<AtomicBool>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Provider {
+    #[default]
     Direct,
     Bedrock,
     Vertex,
-}
-
-impl Default for Provider {
-    fn default() -> Self {
-        Provider::Direct
-    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
