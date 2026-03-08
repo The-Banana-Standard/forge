@@ -1642,6 +1642,24 @@ html, body, #root {
   opacity: 0.7;
 }
 
+/* ── Recent Agent Sessions ── */
+.dash-agent-sessions {
+  margin-bottom: 20px;
+}
+
+.dash-agent-sessions-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.dash-agent-sessions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
 /* ── Stats Row ── */
 .dash-stats-row {
   display: flex;

@@ -131,7 +131,7 @@ export function useTerminal() {
   );
 
   const addWorkspaceAgentTab = useCallback(
-    (workspacePath: string, context: string) => {
+    (workspacePath: string, context: string, sessionId?: string) => {
       const id = crypto.randomUUID();
       setTabs((prev) => {
         const agentCount = prev.filter((t) => t.isWorkspaceAgent).length;
@@ -142,6 +142,7 @@ export function useTerminal() {
           terminalId: null,
           label,
           isClaudeSession: true,
+          sessionId,
           projectPath: workspacePath,
           projectName: "Workspace",
           isWorkspaceAgent: true,
