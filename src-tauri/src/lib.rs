@@ -13,6 +13,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(AppState::new())
         .invoke_handler(tauri::generate_handler![
             commands::terminal::spawn_terminal,
@@ -31,10 +32,13 @@ pub fn run() {
             commands::skills::uninstall_skill,
             commands::skills::check_skills_installed,
             commands::github::get_github_items,
+            commands::settings::save_keyring_secret,
+            commands::settings::get_keyring_secret,
+            commands::settings::delete_keyring_secret,
+            commands::settings::update_provider_cache,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
-                // Kill all PTY child processes, then drop terminal instances
                 if let Some(state) = window.try_state::<AppState>() {
                     if let Ok(mut terminals) = state.terminals.lock() {
                         for (_, term) in terminals.iter_mut() {

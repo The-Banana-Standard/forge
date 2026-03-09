@@ -11,6 +11,8 @@ export interface TerminalTab {
   isWorkspaceAgent?: boolean; // Special workspace-wide Claude session
   workspaceContext?: string; // Full context string for workspace agent
   dead?: boolean; // Process has exited
+  completedWhileHidden?: boolean; // Exited while user was on another tab
+  needsAttention?: boolean; // Bell received while user was on another tab
 }
 
 export type TerminalEvent =

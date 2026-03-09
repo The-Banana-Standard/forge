@@ -48,6 +48,19 @@ const RUST_COMMANDS: Record<string, string[]> = {
   install_skill: ["id", "sourceUrl", "format"],
   uninstall_skill: ["id", "format"],
   check_skills_installed: ["skillIds"],
+
+  // settings.rs
+  save_keyring_secret: ["key", "value"],
+  get_keyring_secret: ["key"],
+  delete_keyring_secret: ["key"],
+  update_provider_cache: [
+    "provider",
+    "awsRegion",
+    "awsProfile",
+    "gcpProjectId",
+    "gcpRegion",
+    "modelOverride",
+  ],
 };
 
 /**
