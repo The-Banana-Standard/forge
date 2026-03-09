@@ -1,6 +1,6 @@
 [package]
 name = "canopy"
-version = "0.1.8"
+version = "0.1.9"
 description = "Desktop workspace manager and terminal multiplexer for Claude Code"
 authors = ["Anthony Mazzola"]
 license = "MIT"
